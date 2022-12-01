@@ -1,19 +1,20 @@
-ThisBuild / scalaVersion          := "3.1.0"
-ThisBuild / version               := "1.1.0"
-ThisBuild / organization          := "io.github.megolden"
-ThisBuild / organizationName      := "golden"
-ThisBuild / organizationHomepage  := Some(url("https://github.com/megolden"))
-ThisBuild / description           := "A Scala utility library"
-ThisBuild / licenses              := List("MIT" -> new URL("https://opensource.org/licenses/mit-license.php"))
-ThisBuild / homepage              := Some(url("https://github.com/megolden/golden-framework-scala"))
-ThisBuild / crossPaths            := false
-ThisBuild / scmInfo               := Some(
+ThisBuild / scalaVersion               := "3.1.0"
+ThisBuild / version                    := "1.1.0"
+ThisBuild / organization               := "io.github.megolden"
+ThisBuild / organizationName           := "golden"
+ThisBuild / organizationHomepage       := Some(url("https://github.com/megolden"))
+ThisBuild / description                := "A Scala utility library"
+ThisBuild / licenses                   := List("MIT" -> url("https://opensource.org/licenses/mit-license.php"))
+ThisBuild / homepage                   := Some(url("https://github.com/megolden/golden-framework-scala"))
+ThisBuild / crossPaths                 := false
+ThisBuild / versionScheme              := Some("early-semver")
+ThisBuild / scmInfo                    := Some(
   ScmInfo(
     url("https://github.com/megolden/golden-framework-scala"),
     "scm:git@github.com:megolden/golden-framework-scala.git"
   )
 )
-ThisBuild / developers            := List(
+ThisBuild / developers                 := List(
   Developer(
     id    = "megolden",
     name  = "Mehdi Eftekhari",
@@ -21,16 +22,15 @@ ThisBuild / developers            := List(
     url   = url("https://github.com/megolden")
   )
 )
-ThisBuild / pomIncludeRepository  := { _ => false }
-ThisBuild / publishTo             := {
+ThisBuild / pomIncludeRepository       := { _ => false }
+ThisBuild / publishTo                  := {
   val nexus = "https://s01.oss.sonatype.org/"
   if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
   else Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
-ThisBuild / publishMavenStyle     := true
-ThisBuild / exportJars            := true
-
-credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+ThisBuild / publishMavenStyle          := true
+ThisBuild / exportJars                 := true
+ThisBuild / credentials                += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 val testLibraries = Seq(
   "org.scalatest" %% "scalatest" % "3.2.14" % Test
@@ -52,7 +52,7 @@ lazy val core = project
     ),
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
-    publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(true)
+    publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
   )
 
 lazy val bind = project
@@ -63,7 +63,7 @@ lazy val bind = project
     libraryDependencies += "javax.inject" % "javax.inject" % "1",
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
-    publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(true)
+    publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
   )
 
 lazy val validation = project
@@ -73,7 +73,7 @@ lazy val validation = project
     name := "framework-validation",
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
-    publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(true)
+    publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
   )
 
 lazy val web = project
@@ -84,7 +84,7 @@ lazy val web = project
     libraryDependencies += "io.javalin" % "javalin" % "4.6.7", // TODO: check if no error, upgrade to 5.0
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
-    publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(true)
+    publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
   )
 
 lazy val hibernate = project
@@ -95,7 +95,7 @@ lazy val hibernate = project
     libraryDependencies += "org.hibernate" % "hibernate-core" % "5.6.10.Final", // TODO: check 6.1.5.Final version
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
-    publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(true)
+    publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
   )
 
 lazy val root = project
@@ -104,6 +104,5 @@ lazy val root = project
   .aggregate(core, bind, validation, web, hibernate)
   .settings(
     name := "framework",
-    publishConfiguration := publishConfiguration.value.withOverwrite(true),
-    publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(true)
+    publish / skip := true
   )
