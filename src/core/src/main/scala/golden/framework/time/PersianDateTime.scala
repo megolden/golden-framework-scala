@@ -30,11 +30,10 @@ final class PersianDateTime private(private val calendar: Calendar) extends Orde
   )
 
   val year: Int = _date.year
-  val month: Int = _date.month
+  val month: PersianMonth = _date.month
   val dayOfMonth: Int = _date.dayOfMonth
   val dayOfYear: Int = _date.dayOfYear
   val dayOfWeek: DayOfWeek = _date.dayOfWeek
-  val nativeMonth: PersianMonth = _date.nativeMonth
   val isLeapYear: Boolean = _date.isLeapYear
   val hour: Int = _time.getHour
   val minute: Int = _time.getMinute
@@ -174,7 +173,7 @@ final class PersianDateTime private(private val calendar: Calendar) extends Orde
     Option(that).map(_.calendar).map(calendar.compareTo).getOrElse(1)
 
   override def toString: String = {
-    f"$year%04d$dateSeparator$month%02d$dateSeparator$dayOfMonth%02d" +
+    _date.toString +
     "T" +
     f"$hour%02d$timeSeparator$minute%02d$timeSeparator$second%02d$nanoSecondSeparator$millisecond%03d"
   }
@@ -212,13 +211,13 @@ object PersianDateTime:
     of(year, month, dayOfMonth, hour, minute, 0, 0)
 
   def of(year: Int, month: PersianMonth, dayOfMonth: Int, hour: Int, minute: Int): PersianDateTime =
-    of(year, month.ordinal + 1, dayOfMonth, hour, minute)
+    of(year, month.value, dayOfMonth, hour, minute)
 
   def of(year: Int, month: PersianMonth, dayOfMonth: Int, hour: Int, minute: Int, second: Int): PersianDateTime =
-    of(year, month.ordinal + 1, dayOfMonth, hour, minute, second)
+    of(year, month.value, dayOfMonth, hour, minute, second)
 
   def of(year: Int, month: PersianMonth, dayOfMonth: Int, hour: Int, minute: Int, second: Int, millisecond: Int): PersianDateTime =
-    of(year, month.ordinal + 1, dayOfMonth, hour, minute, second, millisecond)
+    of(year, month.value, dayOfMonth, hour, minute, second, millisecond)
 
   def of(date: PersianDate, time: LocalTime): PersianDateTime =
     of(date.year, date.month, date.dayOfMonth, time.getHour, time.getMinute, time.getSecond, time.get(MILLI_OF_SECOND))

@@ -3,32 +3,39 @@ package golden.framework
 import golden.framework.ReflectionUtils.*
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.Entry
 
 class ReflectionUtilsTests extends AnyFunSuite with Matchers:
 
-  test("getAnnotatedTypes should return annotated types") {
-    val types = getAnnotatedTypes[Dummy3, dummy]
+  test("getAnnotations should return class annotations with specified type") {
+    val someAnnotations = getAnnotations[SomeWithAnotherAnnotatedClass, someAnnotation]
 
-    types.keys should contain only (typeOf[Dummy1], typeOf[Dummy2])
-    types(typeOf[Dummy1]) should have size 1
-    types(typeOf[Dummy1]).head shouldBe a [dummy]
-    types(typeOf[Dummy2]) should have size 2
-    all (types(typeOf[Dummy2])) shouldBe a [dummy]
+    someAnnotations should have size 1
   }
 
-  test("getMembersWithAnnotations should return type members with it's annotations") {
-    val members = getMembersWithAnnotations[Dummy3]
+  test("getAnnotations should return all class annotations") {
+    val allAnnotations = getAnnotations[SomeWithAnotherAnnotatedClass]
 
-    members.find(_.name == "sayHello").get shouldBe a [MemberDescriptor]
-    members.find(_.name == "sayHello").get.annotations shouldBe empty
-    members.find(_.name == "withAnnotation").get shouldBe a [MemberDescriptor]
-    members.find(_.name == "withAnnotation").get.annotations should have size 1
+    allAnnotations should have size 2
+    allAnnotations.exists(_.isInstanceOf[someAnnotation]) shouldBe true
+    allAnnotations.exists(_.isInstanceOf[anotherAnnotation]) shouldBe true
   }
 
-  @dummy class Dummy1
-  @dummy @dummy class Dummy2
-  class Dummy3(id: Int, name: String):
-    def sayHello(): Unit = ()
-    @dummy def withAnnotation(): Unit = ()
-  class dummy extends annotation.StaticAnnotation
+  test("getPackageAnnotatedTypes should return all package annotated types with specified annotation class") {
+    val types = getPackageAnnotatedTypes[SomeWithAnotherAnnotatedClass, anotherAnnotation]
+
+    types should have size 2
+    types.keySet shouldBe Set(typeOf[SomeWithAnotherAnnotatedClass], typeOf[AnotherAnnotatedClass])
+    types(typeOf[SomeWithAnotherAnnotatedClass]).exists(_.isInstanceOf[someAnnotation]) shouldBe true
+    types(typeOf[SomeWithAnotherAnnotatedClass]).exists(_.isInstanceOf[anotherAnnotation]) shouldBe true
+    types(typeOf[AnotherAnnotatedClass]).exists(_.isInstanceOf[anotherAnnotation]) shouldBe true
+  }
+
+@someAnnotation
+@anotherAnnotation
+class SomeWithAnotherAnnotatedClass
+
+@anotherAnnotation
+class AnotherAnnotatedClass
+
+class someAnnotation extends scala.annotation.StaticAnnotation
+class anotherAnnotation extends scala.annotation.StaticAnnotation

@@ -17,7 +17,7 @@ import scala.util.matching.Regex.quote
 final class PersianDate private(private val calendar: Calendar) extends Ordered[PersianDate] with Serializable:
 
   val year: Int = calendar.get(Calendar.YEAR)
-  val month: Int = calendar.get(Calendar.MONTH) + 1
+  val month: PersianMonth = PersianMonth.fromValue(calendar.get(Calendar.MONTH) + 1)
   val dayOfMonth: Int = calendar.get(Calendar.DAY_OF_MONTH)
   val dayOfYear: Int = calendar.get(Calendar.DAY_OF_YEAR)
   val dayOfWeek: DayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) match {
@@ -29,14 +29,13 @@ final class PersianDate private(private val calendar: Calendar) extends Ordered[
     case Calendar.FRIDAY => DayOfWeek.FRIDAY
     case Calendar.SATURDAY => DayOfWeek.SATURDAY
   }
-  val nativeMonth: PersianMonth = PersianMonth.fromOrdinal(calendar.get(Calendar.MONTH))
   val isLeapYear: Boolean = PersianCalendar.isLeapYear(year)
 
   def get(field: TemporalField): Int = field match {
     case DAY_OF_WEEK => dayOfWeek.getValue
     case DAY_OF_MONTH => dayOfMonth
     case DAY_OF_YEAR => dayOfYear
-    case MONTH_OF_YEAR => month
+    case MONTH_OF_YEAR => month.value
     case YEAR => year
     case _ => throw DateTimeException(s"field not supported: $field")
   }
@@ -119,7 +118,10 @@ final class PersianDate private(private val calendar: Calendar) extends Ordered[
     atTime(LocalTime.MIDNIGHT)
 
   def toLocalDate: LocalDate =
-    LocalDate.ofInstant(calendar.getTime.toInstant, ZoneId.of(calendar.getTimeZone.getID))
+    toLocalDate(ZoneId.systemDefault)
+
+  def toLocalDate(zone: ZoneId): LocalDate =
+    LocalDate.ofInstant(calendar.getTime.toInstant, zone)
 
   def toInstant: Instant =
     calendar.getTime.toInstant
@@ -131,7 +133,7 @@ final class PersianDate private(private val calendar: Calendar) extends Ordered[
     Option(that).map(_.calendar).map(calendar.compareTo).getOrElse(1)
 
   override def toString: String =
-    f"$year%04d$dateSeparator$month%02d$dateSeparator$dayOfMonth%02d"
+    f"$year%04d$dateSeparator${month.value}%02d$dateSeparator$dayOfMonth%02d"
 
   override def hashCode: Int =
     calendar.hashCode
@@ -161,7 +163,7 @@ object PersianDate:
   }
 
   def of(year: Int, month: PersianMonth, dayOfMonth: Int): PersianDate =
-    of(year, month.ordinal + 1, dayOfMonth)
+    of(year, month.value, dayOfMonth)
 
   def ofInstant(instant: Instant): PersianDate = {
     val calendar = getPersianCalendar
