@@ -5,6 +5,7 @@ import org.scalatest.matchers.should.Matchers
 import java.time.format.DateTimeParseException
 import java.time.DayOfWeek.*
 import PersianMonth.*
+import java.time.Month.MAY
 import org.scalatest.prop.TableDrivenPropertyChecks
 import java.time.{DateTimeException, Instant, LocalDate, ZoneId, ZoneOffset}
 
@@ -14,11 +15,10 @@ class PersianDateTests extends AnyFunSuite with Matchers with TableDrivenPropert
     val date = PersianDate.of(1399, 12, 30)
 
     date.year shouldBe 1399
-    date.month shouldBe 12
+    date.month shouldBe Esfand
     date.dayOfMonth shouldBe 30
     date.dayOfWeek shouldBe SATURDAY
     date.dayOfYear shouldBe 366
-    date.nativeMonth shouldBe Esfand
     date.isLeapYear shouldBe true
   }
 
@@ -26,8 +26,7 @@ class PersianDateTests extends AnyFunSuite with Matchers with TableDrivenPropert
     val date = PersianDate.of(1399, Esfand, 30)
 
     date.year shouldBe 1399
-    date.month shouldBe 12
-    date.nativeMonth shouldBe Esfand
+    date.month shouldBe Esfand
     date.dayOfMonth shouldBe 30
   }
 
@@ -35,11 +34,10 @@ class PersianDateTests extends AnyFunSuite with Matchers with TableDrivenPropert
     val date = PersianDate.parse("1399/12/9")
 
     date.year shouldBe 1399
-    date.month shouldBe 12
+    date.month shouldBe Esfand
     date.dayOfMonth shouldBe 9
     date.dayOfWeek shouldBe SATURDAY
     date.dayOfYear shouldBe 345
-    date.nativeMonth shouldBe Esfand
     date.isLeapYear shouldBe true
   }
 
@@ -79,11 +77,10 @@ class PersianDateTests extends AnyFunSuite with Matchers with TableDrivenPropert
     val date = PersianDate.ofInstant(Instant.parse("2022-05-25T19:30:00.000000Z"))
 
     date.year shouldBe 1401
-    date.month shouldBe 3
+    date.month shouldBe Khordad
     date.dayOfMonth shouldBe 5
     date.dayOfWeek shouldBe THURSDAY
     date.dayOfYear shouldBe 67
-    date.nativeMonth shouldBe Khordad
     date.isLeapYear shouldBe false
   }
 
@@ -91,11 +88,10 @@ class PersianDateTests extends AnyFunSuite with Matchers with TableDrivenPropert
     val date = PersianDate.from(LocalDate.parse("2022-05-25"), ZoneOffset.UTC)
 
     date.year shouldBe 1401
-    date.month shouldBe 3
+    date.month shouldBe Khordad
     date.dayOfMonth shouldBe 4
     date.dayOfWeek shouldBe WEDNESDAY
     date.dayOfYear shouldBe 66
-    date.nativeMonth shouldBe Khordad
     date.isLeapYear shouldBe false
   }
 
@@ -103,11 +99,10 @@ class PersianDateTests extends AnyFunSuite with Matchers with TableDrivenPropert
     val date = PersianDate.ofYearDay(1400, 187)
 
     date.year shouldBe 1400
-    date.month shouldBe 7
+    date.month shouldBe Mehr
     date.dayOfMonth shouldBe 1
     date.dayOfWeek shouldBe THURSDAY
     date.dayOfYear shouldBe 187
-    date.nativeMonth shouldBe Mehr
     date.isLeapYear shouldBe false
   }
 
@@ -130,4 +125,20 @@ class PersianDateTests extends AnyFunSuite with Matchers with TableDrivenPropert
     forAll(dayOfMonths) { (month: Int, year: Int, days: Int) =>
       PersianDate.daysInMonth(year, month) shouldBe days
     }
+  }
+
+  test("persian date should be convert to local date") {
+    val date = PersianDate.of(1401, 3, 5).toLocalDate
+
+    date.getYear shouldBe 2022
+    date.getMonth shouldBe MAY
+    date.getDayOfMonth shouldBe 26
+  }
+
+  test("persian date should be convert to utc local date") {
+    val date = PersianDate.of(1401, 3, 5).toLocalDate(ZoneOffset.UTC)
+
+    date.getYear shouldBe 2022
+    date.getMonth shouldBe MAY
+    date.getDayOfMonth shouldBe 25
   }

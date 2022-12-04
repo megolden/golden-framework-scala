@@ -19,17 +19,6 @@ class OptionExtensionsTests extends AnyFunSuite with Matchers:
     Option.empty[Int].toOptional shouldBe Optional.empty[Int]
   }
 
-  test("ifEmpty should be apply function on empty Option") {
-    var emptyCalls = 0
-    var someCalls = 0
-
-    None.ifEmpty(() => emptyCalls += 1)
-    Some(1).ifEmpty(() => someCalls += 1)
-
-    emptyCalls shouldBe 1
-    someCalls shouldBe 0
-  }
-
   test("tap should be apply function on non empty Option") {
     var emptyCalls = 0
     var someCalls = 0

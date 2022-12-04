@@ -1,5 +1,5 @@
 ThisBuild / scalaVersion               := "3.1.0"
-ThisBuild / version                    := "1.1.0"
+ThisBuild / version                    := "1.2.0"
 ThisBuild / organization               := "io.github.megolden"
 ThisBuild / organizationName           := "golden"
 ThisBuild / organizationHomepage       := Some(url("https://github.com/megolden"))
@@ -60,7 +60,10 @@ lazy val bind = project
   .dependsOn(core)
   .settings(
     name := "framework-bind",
-    libraryDependencies += "javax.inject" % "javax.inject" % "1",
+    libraryDependencies ++= Seq(
+      "javax.inject" % "javax.inject" % "1",
+      "org.mockito" % "mockito-core" % "4.9.0" % Test
+    ),
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
     publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
@@ -81,7 +84,7 @@ lazy val web = project
   .dependsOn(core, bind)
   .settings(
     name := "framework-web",
-    libraryDependencies += "io.javalin" % "javalin" % "4.6.7", // TODO: check if no error, upgrade to 5.0
+    libraryDependencies += "io.javalin" % "javalin" % "5.2.0",
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
     publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
