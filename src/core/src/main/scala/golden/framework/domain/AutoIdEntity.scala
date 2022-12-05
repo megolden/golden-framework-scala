@@ -1,15 +1,14 @@
 package golden.framework.domain
 
 import golden.framework.default
-import golden.framework.BooleanUtils.{or, and}
 
 abstract class AutoIdEntity[TId] extends Entity[TId](default[TId]):
 
   private def hasId: Boolean = id != default[TId]
 
   override def equals(other: Any): Boolean = {
-    (other.isInstanceOf[AutoIdEntity[?]] and this.eq(other.asInstanceOf[AutoIdEntity[?]])) or
-    (hasId and super.equals(other))
+    (other.isInstanceOf[AutoIdEntity[?]] && this.eq(other.asInstanceOf[AutoIdEntity[?]])) ||
+    (hasId && super.equals(other))
   }
 
   override def hashCode: Int = {

@@ -42,8 +42,6 @@ lazy val core = project
     name := "framework-core",
     description := "core libraries",
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % "31.1-jre",
-      "org.apache.commons" % "commons-lang3" % "3.12.0",
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.14.1",
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % "2.14.1",
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % "2.14.1",
@@ -76,6 +74,9 @@ lazy val validation = project
   .settings(
     name := "framework-validation",
     description := "a validation library",
+    libraryDependencies ++= Seq(
+      "org.apache.commons" % "commons-lang3" % "3.12.0"
+    ),
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
     publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
@@ -87,7 +88,9 @@ lazy val web = project
   .settings(
     name := "framework-web",
     description := "a simple web framework - uses Javalin framework under the hood",
-    libraryDependencies += "io.javalin" % "javalin" % "5.2.0",
+    libraryDependencies ++= Seq(
+      "io.javalin" % "javalin" % "5.2.0"
+    ),
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
     publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
@@ -99,7 +102,10 @@ lazy val hibernate = project
   .settings(
     name := "framework-hibernate",
     description := "a utility library for hibernate",
-    libraryDependencies += "org.hibernate" % "hibernate-core" % "5.6.10.Final", // TODO: check 6.1.5.Final version
+    libraryDependencies ++= Seq(
+      "org.hibernate" % "hibernate-core" % "5.6.10.Final", // TODO: check 6.1.5.Final version
+      "com.google.guava" % "guava" % "31.1-jre"
+    ),
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
     publishM2Configuration := publishM2Configuration.value.withOverwrite(true)

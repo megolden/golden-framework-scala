@@ -6,7 +6,6 @@ import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime, 
 import java.time.chrono.{ChronoLocalDate, ChronoPeriod, Chronology}
 import java.time.temporal.{ChronoUnit, Temporal, TemporalField, TemporalUnit}
 import golden.framework.OptionExtensions.tap
-import golden.framework.BooleanUtils.{and, not, or}
 import java.time.temporal.ChronoUnit.*
 import java.time.temporal.ChronoField.*
 import java.util.{Date, GregorianCalendar}
@@ -199,7 +198,7 @@ object PersianDate:
   }
 
   def daysInMonth(year: Int, month: Int): Int = {
-    if month < 1 or month > 12 then
+    if month < 1 || month > 12 then
       throw DateTimeException(s"invalid month: $month")
 
     month match {
@@ -213,9 +212,9 @@ object PersianDate:
     PersianDate(calendar)
 
   private[time] def validate(year: Int, month: Int, dayOfMonth: Int): Unit = {
-    if year < MinYear or year > MaxYear or year == 0 or
-       month < 1 or month > 12 or
-       dayOfMonth < 1 or dayOfMonth > daysInMonth(year, month) then
+    if year < MinYear || year > MaxYear || year == 0 ||
+       month < 1 || month > 12 ||
+       dayOfMonth < 1 || dayOfMonth > daysInMonth(year, month) then
 
       throw DateTimeException(s"invalid date: $year$dateSeparator$month$dateSeparator$dayOfMonth")
   }
