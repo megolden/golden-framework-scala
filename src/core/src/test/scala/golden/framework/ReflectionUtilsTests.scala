@@ -1,8 +1,10 @@
 package golden.framework
 
-import golden.framework.ReflectionUtils.*
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.Entry
+import golden.framework.ReflectionUtils.*
+import golden.framework.typeOf
 
 class ReflectionUtilsTests extends AnyFunSuite with Matchers:
 
@@ -30,6 +32,23 @@ class ReflectionUtilsTests extends AnyFunSuite with Matchers:
     types(typeOf[AnotherAnnotatedClass]).exists(_.isInstanceOf[anotherAnnotation]) shouldBe true
   }
 
+  test("getAnnotatedMembers should return all members annotated with specified annotation") {
+    val members = getAnnotatedMembers[SomeClassWithAnnotatedMember, someAnnotation]
+
+    members should have size 3
+    members.keys should contain only("someValue", "someFunction", "someTwiceFunction")
+    members("someValue")._2 should have size 1
+    members("someValue")._2 shouldBe a [Iterable[someAnnotation]]
+    members("someValue")._1 shouldBe typeOf[String]
+    members("someFunction")._2 should have size 1
+    members("someFunction")._2 shouldBe a [Iterable[someAnnotation]]
+    members("someFunction")._1 shouldBe typeOf[String]
+    members("someTwiceFunction")._2 should have size 2
+    members("someTwiceFunction")._2 shouldBe a [Iterable[someAnnotation]]
+    members("someTwiceFunction")._1 shouldBe typeOf[Int]
+    members should not contain key ("anotherAnnotation")
+  }
+
 @someAnnotation
 @anotherAnnotation
 class SomeWithAnotherAnnotatedClass
@@ -39,3 +58,18 @@ class AnotherAnnotatedClass
 
 class someAnnotation extends scala.annotation.StaticAnnotation
 class anotherAnnotation extends scala.annotation.StaticAnnotation
+
+class SomeClassWithAnnotatedMember {
+  @someAnnotation
+  val someValue: String = ???
+
+  @someAnnotation
+  def someFunction: String = ???
+
+  @someAnnotation
+  @someAnnotation
+  def someTwiceFunction: Int = ???
+
+  @anotherAnnotation
+  val anotherValue: Int = ???
+}

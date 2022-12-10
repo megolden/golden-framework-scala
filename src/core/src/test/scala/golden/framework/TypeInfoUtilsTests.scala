@@ -2,8 +2,9 @@ package golden.framework
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import golden.framework.TypeInfoUtils.*
 
-class TypeInfoTests extends AnyFunSuite with Matchers:
+class TypeInfoUtilsTests extends AnyFunSuite with Matchers:
 
   test("fromClass should return TypeInfo from specified class") {
     val clsType = TypeInfo.fromClass(classOf[String])
@@ -37,10 +38,10 @@ class TypeInfoTests extends AnyFunSuite with Matchers:
     cls should be (classOf[List[Int]])
   }
 
-  test("isOption should return true when option type passed") {
+  test("isOptionType should return true when option type passed") {
     val optionType = typeOf[Option[?]]
     val nonOptionType = typeOf[String]
 
-    optionType.isOption shouldBe true
-    nonOptionType.isOption shouldBe false
+    optionType.isOptionType shouldBe true
+    nonOptionType.isOptionType shouldBe false
   }
