@@ -1,7 +1,5 @@
 package golden.framework
 
-import BooleanUtils.{and, or, not}
-
 inline def default[A]: A =
   Macros.getDefault[A]
 
@@ -9,7 +7,10 @@ def nullAs[T]: T =
   null.asInstanceOf[T]
 
 inline def nameOf[A](inline expression: A => ?): String =
-  Macros.getNameOf[A](expression)
+  Macros.getFullNameOf[A](expression).split('.').last
+
+inline def fullNameOf[A](inline expression: A => ?): String =
+  Macros.getFullNameOf[A](expression)
 
 extension (value: Any)
 
@@ -17,21 +18,25 @@ extension (value: Any)
     java.util.Objects.isNull(value)
 
   def nonNull: Boolean =
-    not(value.isNull)
+    !value.isNull
 
   def isNone: Boolean = value match
     case option: Option[?] => option.isEmpty
     case _ => false
 
   def nonNone: Boolean =
-    not(value.isNone)
+    !value.isNone
 
   def unwrapOption: Any = value match
     case option: Option[?] => option.orNull
     case _ => value
 
+  def isOption: Boolean = value match
+    case _: Option[?] => true
+    case _ => false
+
   def isNullOrNone: Boolean =
-    value.isNull or value.isNone
+    value.isNull || value.isNone
 
   def nonNullOrNone: Boolean =
-    value.nonNull and value.nonNone
+    value.nonNull && value.nonNone

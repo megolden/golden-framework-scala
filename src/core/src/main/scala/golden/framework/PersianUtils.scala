@@ -1,7 +1,6 @@
 package golden.framework
 
 import scala.collection.mutable.ListBuffer
-import golden.framework.BooleanUtils.{and, or}
 import golden.framework.StringUtils.Empty
 
 object PersianUtils:
@@ -46,7 +45,7 @@ object PersianUtils:
           var t = Empty
 
           if (n >= 100) {
-            if (n < 200 and appendOne) t = append(t, HUNDREDS.head)
+            if (n < 200 && appendOne) t = append(t, HUNDREDS.head)
             else t = append(t, HUNDREDS(n / 100))
             n %= 100
           }
@@ -63,7 +62,7 @@ object PersianUtils:
             t = append(t, UNITS(n))
 
           if (thPow > 0)
-            if (thPow == 1 and appendOne) t = append(t, THOUSANDS.head, " ")
+            if (thPow == 1 && appendOne) t = append(t, THOUSANDS.head, " ")
             else t = append(t, THOUSANDS(thPow), " ")
 
           t
@@ -88,8 +87,8 @@ object PersianUtils:
 
     def toLatinDigits(alsoArabicDigits: Boolean = true): String = {
       if str.isNull then str else str.map {
-        case ch if ch >= 1776 and ch <= 1785 => (ch - 1728).toChar
-        case ch if alsoArabicDigits and ch >= 1632 and ch <= 1641 => (ch - 1584).toChar
+        case ch if ch >= 1776 && ch <= 1785 => (ch - 1728).toChar
+        case ch if alsoArabicDigits && ch >= 1632 && ch <= 1641 => (ch - 1584).toChar
         case other => other
       }
     }

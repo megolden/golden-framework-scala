@@ -1,15 +1,27 @@
 package golden.framework
 
-import golden.framework.*
-import golden.framework.StringUtils.Empty
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import golden.framework.*
+import golden.framework.StringUtils.Empty
 
 class ExtensionsTests extends AnyFunSuite with Matchers:
 
   test("nameOf should return name of field or method") {
+    nameOf[String](str => str) should be ("str")
     nameOf[String](_.length) should be ("length")
     nameOf[String](_.trim.length) should be ("length")
+    nameOf[String](_.trim.length.toString) should be ("toString")
+    nameOf[String](_.trim.length.toString.lengthIs) should be ("lengthIs")
+    nameOf[String](_.trim.length.toString.lengthIs.toLong) should be ("toLong")
+  }
+
+  test("fullNameOf should return full name of call chain of call") {
+    fullNameOf[String](_.length) should be ("length")
+    fullNameOf[String](_.trim.length) should be ("trim.length")
+    fullNameOf[String](_.trim.length.toString) should be ("trim.length.toString")
+    fullNameOf[String](_.trim.length.toString.lengthIs) should be ("trim.length.toString.lengthIs")
+    fullNameOf[String](_.trim.length.toString.lengthIs.toLong) should be ("trim.length.toString.lengthIs.toLong")
   }
 
   test("default should return default value of specified type") {
@@ -77,4 +89,14 @@ class ExtensionsTests extends AnyFunSuite with Matchers:
     noneValue.unwrapOption.asInstanceOf shouldBe null
     someValue.unwrapOption shouldBe 1
     string.unwrapOption shouldBe "dummy"
+  }
+
+  test("isOption should return true when an Option value passed") {
+    val noneValue = None
+    val someValue = Some(0)
+    val string = "something"
+
+    noneValue.isOption shouldBe true
+    someValue.isOption shouldBe true
+    string.isOption shouldBe false
   }

@@ -1,10 +1,9 @@
-ThisBuild / scalaVersion               := "3.1.0"
-ThisBuild / version                    := "1.2.0"
+ThisBuild / scalaVersion               := "3.2.0"
+ThisBuild / version                    := "1.5.0"
 ThisBuild / organization               := "io.github.megolden"
 ThisBuild / organizationName           := "golden"
 ThisBuild / organizationHomepage       := Some(url("https://github.com/megolden"))
-ThisBuild / description                := "A Scala utility library"
-ThisBuild / licenses                   := List("MIT" -> url("https://opensource.org/licenses/mit-license.php"))
+ThisBuild / licenses                   := List("MIT" -> url("https://opensource.org/licenses/MIT"))
 ThisBuild / homepage                   := Some(url("https://github.com/megolden/golden-framework-scala"))
 ThisBuild / crossPaths                 := false
 ThisBuild / versionScheme              := Some("early-semver")
@@ -33,16 +32,16 @@ ThisBuild / exportJars                 := true
 ThisBuild / credentials                += Credentials(Path.userHome / ".sbt" / ".credentials")
 
 val testLibraries = Seq(
-  "org.scalatest" %% "scalatest" % "3.2.14" % Test
+  "org.scalatest" %% "scalatest" % "3.2.14" % Test,
+  "org.mockito" % "mockito-core" % "4.9.0" % Test
 )
 
 lazy val core = project
   .in(file("src/core"))
   .settings(
     name := "framework-core",
+    description := "core libraries",
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % "31.1-jre",
-      "org.apache.commons" % "commons-lang3" % "3.12.0",
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.14.1",
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % "2.14.1",
       "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % "2.14.1",
@@ -60,9 +59,9 @@ lazy val bind = project
   .dependsOn(core)
   .settings(
     name := "framework-bind",
+    description := "a lightweight dependency injection library",
     libraryDependencies ++= Seq(
-      "javax.inject" % "javax.inject" % "1",
-      "org.mockito" % "mockito-core" % "4.9.0" % Test
+      "javax.inject" % "javax.inject" % "1"
     ),
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
@@ -74,6 +73,10 @@ lazy val validation = project
   .dependsOn(core)
   .settings(
     name := "framework-validation",
+    description := "a validation library",
+    libraryDependencies ++= Seq(
+      "org.apache.commons" % "commons-lang3" % "3.12.0"
+    ),
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
     publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
@@ -84,7 +87,10 @@ lazy val web = project
   .dependsOn(core, bind)
   .settings(
     name := "framework-web",
-    libraryDependencies += "io.javalin" % "javalin" % "5.2.0",
+    description := "a simple web framework - uses Javalin framework under the hood",
+    libraryDependencies ++= Seq(
+      "io.javalin" % "javalin" % "5.2.0"
+    ),
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
     publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
@@ -95,7 +101,11 @@ lazy val hibernate = project
   .dependsOn(core)
   .settings(
     name := "framework-hibernate",
-    libraryDependencies += "org.hibernate" % "hibernate-core" % "5.6.10.Final", // TODO: check 6.1.5.Final version
+    description := "a utility library for hibernate",
+    libraryDependencies ++= Seq(
+      "org.hibernate" % "hibernate-core" % "5.6.10.Final", // TODO: check 6.1.5.Final version
+      "com.google.guava" % "guava" % "31.1-jre"
+    ),
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
     publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
@@ -107,5 +117,6 @@ lazy val root = project
   .aggregate(core, bind, validation, web, hibernate)
   .settings(
     name := "framework",
+    description := "a simple framework for Scala",
     publish / skip := true
   )

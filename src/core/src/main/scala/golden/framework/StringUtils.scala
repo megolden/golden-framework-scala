@@ -1,12 +1,10 @@
 package golden.framework
 
-import org.apache.commons.lang3.StringUtils.{isBlank, isEmpty, EMPTY}
-import BooleanUtils.not
-
 object StringUtils:
-  val Empty: String = EMPTY
+  val Empty: String = ""
 
   extension (s: String)
-    def nonBlank: Boolean = not(isBlank(s))
-    def isNullOrBlank: Boolean = isBlank(s)
-    def isNullOrEmpty: Boolean = isEmpty(s)
+    def isEmpty: Boolean = s == null || s.length == 0
+    def nonEmpty: Boolean = s != null && s.length != 0
+    def isBlank: Boolean = s == null || s.length == 0 || s.forall(_.isWhitespace)
+    def nonBlank: Boolean = s != null && s.length > 0 && s.exists(!_.isWhitespace)

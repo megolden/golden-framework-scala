@@ -4,7 +4,6 @@ import golden.framework.{TypeInfo, typeOf}
 import scala.collection.mutable
 import java.io.Closeable
 import ServiceLifetime.*
-import golden.framework.BooleanUtils.not
 
 private[bind] class ContainerImpl private(
   registry: Seq[ServiceDescriptor],
@@ -71,7 +70,7 @@ private[bind] class ContainerImpl private(
   }
 
   private def addToCloseables(instance: Any, descriptor: ServiceDescriptor): Unit = {
-    if (instance != this && not(descriptor.externallyOwned) && instance.isInstanceOf[Closeable]) {
+    if (instance != this && !descriptor.externallyOwned && instance.isInstanceOf[Closeable]) {
       if (descriptor.lifetime != Singleton || isRoot)
         _closeableInstances += instance.asInstanceOf[Closeable]
     }

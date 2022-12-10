@@ -11,7 +11,6 @@ import java.time.temporal.ChronoUnit
 import java.time.temporal.ChronoField.*
 import java.time.temporal.ChronoUnit.*
 import java.util.Date
-import golden.framework.BooleanUtils.or
 import scala.util.matching.Regex.quote
 import java.time.format.DateTimeParseException
 
@@ -258,10 +257,10 @@ object PersianDateTime:
   private def validate(year: Int, month: Int, dayOfMonth: Int, hour: Int, minute: Int, second: Int, millisecond: Int): Unit = {
     PersianDate.validate(year, month, dayOfMonth)
 
-    if hour < 0 or hour > 23 or
-       minute < 0 or minute > 59 or
-       second < 0 or second > 59 or
-       millisecond < 0 or millisecond > 999 then
+    if hour < 0 || hour > 23 ||
+       minute < 0 || minute > 59 ||
+       second < 0 || second > 59 ||
+       millisecond < 0 || millisecond > 999 then
 
       throw DateTimeException(
         s"invalid time: $hour$timeSeparator$minute$timeSeparator$second$nanoSecondSeparator$millisecond")
