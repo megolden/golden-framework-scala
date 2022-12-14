@@ -2,8 +2,8 @@ package golden.framework.validation
 
 import golden.framework.{Predicate, Predicate2}
 
-private[validation] class PropertyValidationRuleImpl[P, T](rule: Predicate2[P, T])
-  extends PropertyValidationRule[P, T] :
+private[validation] class PropertyValidationRuleImpl[P, T](rule: Predicate2[P, T], propertyPath: String)
+  extends PropertyValidationRule[P, T]:
 
   private var _failure: (P, T) => Exception = (_, _) => ValidationException()
   private var _when: Predicate2[P, T] = (_, _) => true
@@ -14,8 +14,12 @@ private[validation] class PropertyValidationRuleImpl[P, T](rule: Predicate2[P, T
     this
   }
 
-  override def withMessage(message: String): Unit =
-    _failure = (value, obj) => ValidationException(message.format(value, obj))
+  override def withMessage(messageProvider: (P, T) => String): Unit =
+    _failure = (value, obj) => {
+      ValidationException(
+        messageProvider.apply(value, obj)
+        .format(value, obj, propertyPath.split('.').last))
+    }
 
   override def withFailure(failure: (P, T) => Exception): Unit =
     _failure = failure

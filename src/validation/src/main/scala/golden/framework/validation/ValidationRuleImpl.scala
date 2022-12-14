@@ -2,7 +2,7 @@ package golden.framework.validation
 
 import golden.framework.Predicate
 
-private[validation] class ValidationRuleImpl[T](rule: Predicate[T]) extends ValidationRule[T] :
+private[validation] class ValidationRuleImpl[T](rule: Predicate[T]) extends ValidationRule[T]:
 
   private var _failure: T => Exception = _ => ValidationException()
   private var _when: Predicate[T] = _ => true
@@ -13,8 +13,8 @@ private[validation] class ValidationRuleImpl[T](rule: Predicate[T]) extends Vali
     this
   }
 
-  override def withMessage(message: String): Unit =
-    _failure = value => ValidationException(message.format(value))
+  override def withMessage(messageProvider: T => String): Unit =
+    _failure = value => ValidationException(messageProvider.apply(value).format(value))
 
   override def withFailure(failure: T => Exception): Unit =
     _failure = failure

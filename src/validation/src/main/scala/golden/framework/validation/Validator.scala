@@ -12,10 +12,10 @@ trait Validator[T]:
   final def mustNot(rule: Predicate[T]): ValidationRule[T] =
     must(!rule.apply(_))
 
-  private[validation] def the[P](propertyName: String, skipNone: Boolean): PropertyValidator[P, T]
+  private[validation] def the[P](propertyPath: String, skipNone: Boolean): PropertyValidator[P, T]
 
-  final def the[P](propertyName: String): PropertyValidator[P, T] =
-    the(propertyName, skipNone = false)
+  final def the[P](propertyPath: String): PropertyValidator[P, T] =
+    the(propertyPath, skipNone = false)
 
   final inline def the[P](inline property: T => P): PropertyValidator[P, T] =
     the[P](fullNameOf(property))
@@ -23,20 +23,21 @@ trait Validator[T]:
   final inline def theOption[P](inline property: T => Option[P]): PropertyValidator[P, T] =
     theOption[P](fullNameOf(property))
 
-  final def theOption[P](propertyName: String): PropertyValidator[P, T] =
-    the[P](propertyName, skipNone = true)
+  final def theOption[P](propertyPath: String): PropertyValidator[P, T] =
+    the[P](propertyPath, skipNone = true)
 
-  def validate(value: T): Unit
+  def validate(value: Any): Unit
 
   def hasValidator(validator: Validator[T]): Unit
 
 object Validator:
+
   inline def validate[T](annotatedObject: T): Unit = {
     val properties = getAnnotatedMembers[T, ValidationAnnotation]
     val validator = validatorFor[T] { validator =>
       properties.foreach { case (name, (tpe, annotations)) =>
         val propertyValidator = validator.the[Any](name, skipNone = tpe.isOptionType)
-        annotations.foreach { _.applyRule[Any, T](propertyValidator) }
+        annotations.foreach { _.apply[Any, T](propertyValidator) }
       }
     }
     validator.validate(annotatedObject)
