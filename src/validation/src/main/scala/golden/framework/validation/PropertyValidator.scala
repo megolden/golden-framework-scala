@@ -12,4 +12,7 @@ trait PropertyValidator[P, T]:
   final def must(rule: Predicate[P]): PropertyValidationRule[P, T] =
     must((value, _) => rule.apply(value))
 
+  final def mustNot(rule: Predicate[P]): PropertyValidationRule[P, T] =
+    mustNot((value, _) => rule.apply(value))
+
   def hasValidator(validator: Validator[P]): Unit

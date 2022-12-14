@@ -12,12 +12,13 @@ private[validation] class ValidatorImpl[T](skipNone: Boolean = false) extends Va
 
   override def must(rule: Predicate[T]): ValidationRule[T] = {
     val validationRule = new ValidationRuleImpl[T](rule)
+    validationRule.withMessage("the specified condition was not met.")
     _rules += Left(validationRule)
     validationRule
   }
 
-  override def the[P](propertyName: String, skipNone: Boolean): PropertyValidator[P, T] = {
-    val validationRule = new PropertyValidatorImpl[P, T](propertyName, skipNone)
+  override def the[P](propertyPath: String, skipNone: Boolean): PropertyValidator[P, T] = {
+    val validationRule = new PropertyValidatorImpl[P, T](propertyPath, skipNone)
     _rules += Right(validationRule)
     validationRule
   }
@@ -25,7 +26,7 @@ private[validation] class ValidatorImpl[T](skipNone: Boolean = false) extends Va
   override def hasValidator(validator: Validator[T]): Unit =
     _validators += validator
 
-  override def validate(value: T): Unit = {
+  override def validate(value: Any): Unit = {
     if _rules.isEmpty && _validators.isEmpty then return
 
     if skipNone && value.isNone then return
@@ -33,7 +34,7 @@ private[validation] class ValidatorImpl[T](skipNone: Boolean = false) extends Va
     val valueOrUnwrapped =
       if skipNone && value.isOption
       then value.unwrapOption.asInstanceOf[T]
-      else value
+      else value.asInstanceOf[T]
 
     _rules.foreach {
       case Left(rule) => rule.validate(valueOrUnwrapped)
