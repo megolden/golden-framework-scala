@@ -7,6 +7,8 @@ import scalaj.http.{Http, MultiPart}
 
 class ApplicationTests extends AnyFunSuite with Matchers with BeforeAndAfterEach:
 
+  val port = 7070
+  val baseUrl = s"http://localhost:$port"
   var app: Application = _
 
   test("simple request should be handled") {
@@ -14,7 +16,7 @@ class ApplicationTests extends AnyFunSuite with Matchers with BeforeAndAfterEach
       _.addGetHandler("/", _.result("HELLO"))
     }
 
-    val result = Http("http://localhost:7070/").asString
+    val result = Http(s"$baseUrl/").asString
 
     result.body shouldBe "HELLO"
   }
@@ -24,7 +26,7 @@ class ApplicationTests extends AnyFunSuite with Matchers with BeforeAndAfterEach
       _.addGetHandler("/hello/{name}", ctx => ctx.result(s"HELLO ${ctx.pathParam("name").get}"))
     }
 
-    val result = Http("http://localhost:7070/hello/ali").asString
+    val result = Http(s"$baseUrl/hello/ali").asString
 
     result.body shouldBe "HELLO ali"
   }
@@ -34,7 +36,7 @@ class ApplicationTests extends AnyFunSuite with Matchers with BeforeAndAfterEach
       _.addGetHandler("/hello", ctx => ctx.result(s"HELLO ${ctx.queryParam("name").get}"))
     }
 
-    val result = Http("http://localhost:7070/hello?name=ali").asString
+    val result = Http(s"$baseUrl/hello?name=ali").asString
 
     result.body shouldBe "HELLO ali"
   }
@@ -44,7 +46,7 @@ class ApplicationTests extends AnyFunSuite with Matchers with BeforeAndAfterEach
       _.addPostHandler("/hello", ctx => ctx.result(s"HELLO ${ctx.formParam("name").get}"))
     }
 
-    val result = Http("http://localhost:7070/hello").postForm(Seq("name" -> "ali")).asString
+    val result = Http(s"$baseUrl/hello").postForm(Seq("name" -> "ali")).asString
 
     result.body shouldBe "HELLO ali"
   }
@@ -54,7 +56,7 @@ class ApplicationTests extends AnyFunSuite with Matchers with BeforeAndAfterEach
       _.addGetHandler("/hello", ctx => ctx.result(s"HELLO ${ctx.header("name").get}"))
     }
 
-    val result = Http("http://localhost:7070/hello").header("name", "ali").asString
+    val result = Http(s"$baseUrl/hello").header("name", "ali").asString
 
     result.body shouldBe "HELLO ali"
   }
@@ -65,7 +67,7 @@ class ApplicationTests extends AnyFunSuite with Matchers with BeforeAndAfterEach
         ctx => ctx.result(s"HELLO ${ctx.uploadedFile("test").map(f => new String(f.content.readAllBytes)).get}"))
     }
 
-    val result = Http("http://localhost:7070/hello").postMulti(
+    val result = Http(s"$baseUrl/hello").postMulti(
       MultiPart("test", "test.txt", "text/plain", "ali".getBytes))
       .asString
 
@@ -78,7 +80,7 @@ class ApplicationTests extends AnyFunSuite with Matchers with BeforeAndAfterEach
         ctx => ctx.result(s"HELLO ${ctx.uploadedFile(index = 1).map(f => new String(f.content.readAllBytes)).get}"))
     }
 
-    val result = Http("http://localhost:7070/hello").postMulti(
+    val result = Http(s"$baseUrl/hello").postMulti(
       MultiPart("test1", "test1.txt", "text/plain", "ali".getBytes),
       MultiPart("test2", "test2.txt", "text/plain", "reza".getBytes))
       .asString
@@ -93,5 +95,5 @@ class ApplicationTests extends AnyFunSuite with Matchers with BeforeAndAfterEach
   private def anAppWith(setup: ApplicationBuilder => ?): Unit = {
     val builder = ApplicationBuilder.create().logging(false)
     setup.apply(builder)
-    app = builder.build().start(7070)
+    app = builder.build().start(port)
   }
