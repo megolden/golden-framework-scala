@@ -104,7 +104,7 @@ class ContainerBuilderTests extends AnyFunSuite with Matchers:
   }
 
   private def aContainerWith(setup: ContainerBuilder => ?): Container = {
-    val builder = new ContainerBuilder()
+    val builder = ContainerBuilder.create()
     setup(builder)
     builder.build()
   }

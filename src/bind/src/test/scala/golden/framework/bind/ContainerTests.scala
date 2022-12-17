@@ -206,7 +206,7 @@ class ContainerTests extends AnyFunSuite with Matchers:
   }
 
   private def aContainerWith(setup: ContainerBuilder => ?, tags: Any*): Container = {
-    val builder = new ContainerBuilder()
+    val builder = ContainerBuilder.create()
     Option(setup).tapEach(_.apply(builder))
     builder.build(tags*)
   }

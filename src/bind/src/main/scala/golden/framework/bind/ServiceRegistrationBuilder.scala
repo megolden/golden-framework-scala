@@ -23,5 +23,3 @@ trait ServiceRegistrationBuilder:
   def withLifetime(lifetime: ServiceLifetime): ServiceRegistrationBuilder
 
   def externallyOwned(): ServiceRegistrationBuilder
-
-  private[bind] def build(): ServiceDescriptor

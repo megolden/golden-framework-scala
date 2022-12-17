@@ -1,42 +1,49 @@
 package golden.framework.bind
 
 import golden.framework.{TypeInfo, typeOf, ReflectionUtils}
-import scala.collection.mutable
 import ServiceLifetime.*
 
-class ContainerBuilder:
+trait ContainerBuilder:
 
-  private val _registry = mutable.ArrayBuffer.empty[ServiceRegistrationBuilder]
+  def registerType(tpe: TypeInfo): ServiceRegistrationBuilder
 
-  def registerType(tpe: TypeInfo): ServiceRegistrationBuilder = {
-    val builder = ServiceRegistrationBuilderImpl(tpe)
-    _registry += builder
-    builder
-  }
-
-  inline def registerType[T]: ServiceRegistrationBuilder =
+  final inline def registerType[T]: ServiceRegistrationBuilder =
     registerType(typeOf[T]).usingConstructor(TypeServiceProvider.resolveConstructor[T]() *)
 
-  inline def registerInstance[T](instance: T): ServiceRegistrationBuilder = {
-    val builder = ServiceRegistrationBuilderImpl(typeOf[T], instance = Some(instance))
-    _registry += builder
-    builder
+  private[bind] def registerInstance(instance: Any, tpe: TypeInfo): ServiceRegistrationBuilder
+
+  final inline def registerInstance[T](instance: T): ServiceRegistrationBuilder =
+    registerInstance(instance, typeOf[T])
+
+  private[bind] def register(provider: Container => Any, tpe: TypeInfo): ServiceRegistrationBuilder
+
+  final inline def register[T](provider: Container => T): ServiceRegistrationBuilder =
+    register(provider.apply(_), typeOf[T])
+
+  final inline def registerService[T](): ServiceRegistrationBuilder = {
+    val tpe = typeOf[T]
+    val serviceAnnotations = ReflectionUtils.getAnnotations[T, service]
+    registerService(tpe, serviceAnnotations)
   }
 
-  inline def register[T](provider: Container => T): ServiceRegistrationBuilder = {
-    val builder = ServiceRegistrationBuilderImpl(typeOf[T], factory = Some(provider))
-    _registry += builder
-    builder
-  }
-
-  def registerModule(module: Module): ContainerBuilder = {
+  final def registerModule(module: Module): ContainerBuilder = {
     module.load(this)
     this
   }
 
+  def build(tags: Any*): Container
+
+  final private[bind] def registerServiceWithConstructor(
+    tpe: TypeInfo,
+    serviceAnnotations: Iterable[service],
+    ctorParameterTypes: Seq[TypeInfo]): ServiceRegistrationBuilder = {
+
+    registerService(tpe, serviceAnnotations).usingConstructor(ctorParameterTypes*)
+  }
+
   private def registerService(tpe: TypeInfo, serviceAnnotations: Iterable[service]): ServiceRegistrationBuilder = {
     if (serviceAnnotations.isEmpty)
-      throw ServiceRegistrationException(s"type '$tpe' not annotated as service")
+      throw ServiceRegistrationException(s"type not annotated as service: $tpe")
 
     var builder = registerType(tpe)
     serviceAnnotations.foreach { service =>
@@ -53,24 +60,5 @@ class ContainerBuilder:
     builder
   }
 
-  inline def registerService[T](): ServiceRegistrationBuilder =
-    registerService(typeOf[T], ReflectionUtils.getAnnotations[T, service])
-
-  private[bind] def registerServiceWithConstructor(
-    tpe: TypeInfo,
-    serviceAnnotations: Iterable[service],
-    ctorParameterTypes: Seq[TypeInfo]): ServiceRegistrationBuilder = {
-
-    registerService(tpe, serviceAnnotations).usingConstructor(ctorParameterTypes*)
-  }
-
-  private[bind] def buildServiceDescriptors(): Seq[ServiceDescriptor] = {
-    val containerService = ServiceDescriptor(
-      Some(typeOf[Container]),
-      FactoryServiceProvider(typeOf[Container], container => container),
-      Scope)
-    _registry.toSeq.map(_.build()) :+ containerService
-  }
-
-  def build(tags: Any*): Container =
-    new ContainerImpl(buildServiceDescriptors(), tags*)
+object ContainerBuilder:
+  def create(): ContainerBuilder = new ContainerBuilderImpl()

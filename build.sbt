@@ -89,9 +89,12 @@ lazy val web = project
     name := "framework-web",
     description := "a simple web framework - uses Javalin framework under the hood",
     libraryDependencies ++= Seq(
-      "io.javalin" % "javalin" % "5.2.0"
+      "io.javalin" % "javalin" % "5.2.0",
+      "org.slf4j" % "slf4j-simple" % "2.0.6"
     ),
-    libraryDependencies ++= testLibraries,
+    libraryDependencies ++= testLibraries ++ Seq(
+      "org.scalaj" % "scalaj-http_2.13" % "2.4.2" % Test
+    ),
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
     publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
   )
@@ -108,7 +111,8 @@ lazy val hibernate = project
     ),
     libraryDependencies ++= testLibraries,
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
-    publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
+    publishM2Configuration := publishM2Configuration.value.withOverwrite(true),
+    publish / skip := true
   )
 
 lazy val root = project
