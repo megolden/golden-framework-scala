@@ -48,7 +48,7 @@ private[bind] class ServiceRegistrationBuilderImpl(
     this
   }
 
-  override def build(): ServiceDescriptor = {
+  def build(): ServiceDescriptor = {
     val serviceTypes = if _serviceTypes.isEmpty then Seq(implementationType) else _serviceTypes
     val provider: ServiceProvider =
       instance.map(InstanceServiceProvider(implementationType, _))

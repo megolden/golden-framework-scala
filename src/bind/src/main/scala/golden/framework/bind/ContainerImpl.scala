@@ -77,7 +77,7 @@ private[bind] class ContainerImpl private(
   }
 
   override def createScope(additionalSetup: ContainerBuilder => ?, tags: Any*): Container =
-    val builder = new ContainerBuilder
+    val builder = new ContainerBuilderImpl
     additionalSetup(builder)
     val additionalDescriptors = builder.buildServiceDescriptors()
     new ContainerImpl(registry ++ additionalDescriptors, singletonInstances, isRoot = false, tags.toSet, Some(root))
