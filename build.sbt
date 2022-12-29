@@ -1,5 +1,5 @@
 ThisBuild / scalaVersion               := "3.2.0"
-ThisBuild / version                    := "1.9.0"
+ThisBuild / version                    := "1.10.0"
 ThisBuild / organization               := "io.github.megolden"
 ThisBuild / organizationName           := "golden"
 ThisBuild / organizationHomepage       := Some(url("https://github.com/megolden"))
@@ -33,7 +33,7 @@ ThisBuild / credentials                += Credentials(Path.userHome / ".sbt" / "
 
 val testLibraries = Seq(
   "org.scalatest" %% "scalatest" % "3.2.14" % Test,
-  "org.mockito" % "mockito-core" % "4.9.0" % Test
+  "org.mockito" % "mockito-core" % "4.10.0" % Test
 )
 
 lazy val core = project
@@ -106,13 +106,14 @@ lazy val hibernate = project
     name := "framework-hibernate",
     description := "a utility library for hibernate",
     libraryDependencies ++= Seq(
-      "org.hibernate" % "hibernate-core" % "5.6.10.Final", // TODO: check 6.1.5.Final version
+      "org.hibernate.orm" % "hibernate-core" % "6.1.6.Final",
       "com.google.guava" % "guava" % "31.1-jre"
     ),
-    libraryDependencies ++= testLibraries,
+    libraryDependencies ++= testLibraries ++ Seq(
+      "org.hsqldb" % "hsqldb" % "2.7.1" % Test
+    ),
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
-    publishM2Configuration := publishM2Configuration.value.withOverwrite(true),
-    publish / skip := true
+    publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
   )
 
 lazy val root = project

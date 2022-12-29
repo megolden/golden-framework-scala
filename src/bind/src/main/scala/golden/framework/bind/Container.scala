@@ -4,7 +4,7 @@ import golden.framework.TypeInfo
 import golden.framework.typeOf
 import java.io.Closeable
 
-trait Container  extends Closeable:
+trait Container extends Closeable:
 
   val isRoot: Boolean
   val root: Container

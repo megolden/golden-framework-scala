@@ -11,8 +11,8 @@ private[framework] object Macros:
   private def getTypeImpl[A: Type](using Quotes): Expr[TypeInfo] =
     typeToExpr(quotes.reflect.TypeRepr.of[A])
 
-  inline def getFullNameOf[A](inline expression: A => ?): String = ${ getFullNameOfImpl[A]('expression) }
-  private def getFullNameOfImpl[A](expression: Expr[A => ?])(using Quotes): Expr[String] = {
+  inline def getFullNameOf[A](inline expr: A => ?): String = ${ getFullNameOfImpl[A]('{expr}) }
+  private def getFullNameOfImpl[A](expr: Expr[A => ?])(using Quotes): Expr[String] = {
     import quotes.reflect.*
 
     def resolveTermName(term: Term): String = term match {
@@ -24,7 +24,7 @@ private[framework] object Macros:
       case Inlined(_, _, inlined: Inlined) => resolveTermName(inlined)
       case Ident(name) => name
     }
-    val name = resolveTermName(expression.asTerm)
+    val name = resolveTermName(expr.asTerm)
     Expr(name)
   }
 

@@ -1,0 +1,63 @@
+package golden.framework.hibernate.mapping
+
+import com.fasterxml.jackson.dataformat.xml.annotation.{JacksonXmlProperty, JacksonXmlRootElement}
+
+@JacksonXmlRootElement(localName = "class")
+class ClassDef(
+  typeName: String,
+  isAbstract: Option[Boolean] = None,
+  lazyFetch: Option[Boolean] = None,
+  dynamicUpdate: Option[Boolean] = None,
+  dynamicInsert: Option[Boolean] = None,
+  val table: Option[String] = None,
+  val schema: Option[String] = None,
+  val mutable: Option[Boolean] = None,
+  val id: Option[IdDef | CompositeIdDef] = None,
+  val discriminator: Option[DiscriminatorDef] = None,
+  val discriminatorValue: Option[Any] = None,
+  properties: Seq[PropertyDef] = Nil,
+  components: Iterable[ComponentDef] = Nil,
+  collections: Iterable[CollectionDef] = Nil,
+  oneToOnes: Iterable[OneToOneDef] = Nil,
+  manyToOnes: Iterable[ManyToOneDef] = Nil,
+  val subclasses: Iterable[SubclassDef] = Nil,
+  val joinedSubclasses: Iterable[JoinedSubclassDef] = Nil)
+
+  extends ClassDefBase(
+    typeName,
+    isAbstract,
+    lazyFetch,
+    dynamicUpdate,
+    dynamicInsert,
+    properties,
+    components,
+    collections,
+    oneToOnes,
+    manyToOnes):
+
+  @JacksonXmlProperty(localName = "table", isAttribute = true)
+  private def getTable = table.orNull
+
+  @JacksonXmlProperty(localName = "schema", isAttribute = true)
+  private def getSchema = schema.orNull
+
+  @JacksonXmlProperty(localName = "mutable", isAttribute = true)
+  private def getMutable = mutable.orNull
+
+  @JacksonXmlProperty(localName = "id")
+  private def getId = id.collect({ case id: IdDef => id }).orNull
+
+  @JacksonXmlProperty(localName = "composite-id")
+  private def getCompositeId = id.collect({ case compositeId: CompositeIdDef => compositeId }).orNull
+
+  @JacksonXmlProperty(localName = "discriminator")
+  private def getDiscriminator = discriminator.orNull
+
+  @JacksonXmlProperty(localName = "discriminator-value", isAttribute = true)
+  private def getDiscriminatorValue = discriminatorValue.orNull
+
+  @JacksonXmlProperty(localName = "subclass")
+  private def getSubclasses = subclasses
+
+  @JacksonXmlProperty(localName = "joined-subclass")
+  private def getJoinedSubclasses = joinedSubclasses
