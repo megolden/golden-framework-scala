@@ -6,7 +6,7 @@ import scala.collection.mutable.ArrayBuffer as MutableArray
 import golden.framework.{Predicate2, isNull, isNone, isOption, unwrapOption}
 import golden.framework.OptionExtensions.tap
 
-private[validation] class PropertyValidatorImpl[P, T](propertyPath: String, skipNone: Boolean = false)
+private class PropertyValidatorImpl[P, T](propertyPath: String, skipNone: Boolean = false)
   extends PropertyValidator[P, T]:
 
   private val _rules = MutableArray.empty[PropertyValidationRuleImpl[P, T]]

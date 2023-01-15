@@ -5,7 +5,7 @@ import golden.framework.Predicate
 import golden.framework.{isNone, isOption, unwrapOption}
 import golden.framework.OptionExtensions.tap
 
-private[validation] class ValidatorImpl[T](skipNone: Boolean = false) extends Validator[T]:
+private class ValidatorImpl[T](skipNone: Boolean = false) extends Validator[T]:
 
   private val _rules = MutableArray.empty[Either[ValidationRuleImpl[T], PropertyValidatorImpl[?, T]]]
   private val _validators = MutableArray.empty[Validator[T]]

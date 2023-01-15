@@ -3,7 +3,7 @@ package golden.framework.validation.rules
 import golden.framework.validation.{ValidationRule, Validator}
 import golden.framework.{nonNullOrNone, Predicate}
 
-private[validation] class CommonValidatorImpl[T](validator: Validator[T], negate: Boolean = false)
+private class CommonValidatorImpl[T](validator: Validator[T], negate: Boolean = false)
   extends CommonValidator[T]:
 
   override def required: ValidationRule[T] = {

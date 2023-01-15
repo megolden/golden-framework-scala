@@ -2,7 +2,7 @@ package golden.framework.validation
 
 import golden.framework.{Predicate, Predicate2}
 
-private[validation] class PropertyValidationRuleImpl[P, T](rule: Predicate2[P, T], propertyPath: String)
+private class PropertyValidationRuleImpl[P, T](rule: Predicate2[P, T], propertyPath: String)
   extends PropertyValidationRule[P, T]:
 
   private var _failure: (P, T) => Exception = (_, _) => ValidationException()

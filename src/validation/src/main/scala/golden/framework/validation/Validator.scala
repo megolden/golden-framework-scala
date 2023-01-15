@@ -3,7 +3,7 @@ package golden.framework.validation
 import golden.framework.{Predicate, fullNameOf}
 import golden.framework.validation.annotations.ValidationAnnotation
 import golden.framework.ReflectionUtils.getAnnotatedMembers
-import golden.framework.TypeInfoUtils.isOptionType
+import golden.framework.TypeUtils.isOptionType
 
 trait Validator[T]:
 
@@ -41,4 +41,16 @@ object Validator:
       }
     }
     validator.validate(annotatedObject)
+  }
+
+  inline def createFor[T](setup: Validator[T] => ?): Validator[T] = {
+    val validator = new ValidatorImpl[T]
+    setup.apply(validator)
+    validator
+  }
+
+  inline def createForOption[T](setup: Validator[T] => ?): Validator[T] = {
+    val validator = new ValidatorImpl[T](skipNone = true)
+    setup.apply(validator)
+    validator
   }

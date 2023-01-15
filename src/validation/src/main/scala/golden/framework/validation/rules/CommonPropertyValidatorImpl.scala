@@ -3,7 +3,7 @@ package golden.framework.validation.rules
 import golden.framework.validation.{PropertyValidationRule, PropertyValidator}
 import golden.framework.{nonNullOrNone, Predicate, Predicate2}
 
-private[validation] class CommonPropertyValidatorImpl[P, T](validator: PropertyValidator[P, T], negate: Boolean = false)
+private class CommonPropertyValidatorImpl[P, T](validator: PropertyValidator[P, T], negate: Boolean = false)
   extends CommonPropertyValidator[P, T]:
 
   override def required: PropertyValidationRule[P, T] = {

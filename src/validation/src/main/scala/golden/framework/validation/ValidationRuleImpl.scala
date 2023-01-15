@@ -2,7 +2,7 @@ package golden.framework.validation
 
 import golden.framework.Predicate
 
-private[validation] class ValidationRuleImpl[T](rule: Predicate[T]) extends ValidationRule[T]:
+private class ValidationRuleImpl[T](rule: Predicate[T]) extends ValidationRule[T]:
 
   private var _failure: T => Exception = _ => ValidationException()
   private var _when: Predicate[T] = _ => true
