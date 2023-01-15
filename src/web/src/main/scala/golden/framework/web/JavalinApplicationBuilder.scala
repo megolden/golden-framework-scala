@@ -2,7 +2,7 @@ package golden.framework.web
 
 import golden.framework.bind.{Container, ContainerBuilder, Module}
 import golden.framework.json.JsonMapper
-import golden.framework.{Environment, StartupTask, TypeInfo}
+import golden.framework.{Environment, StartupTask, Type}
 import io.javalin.Javalin
 import io.javalin.http.staticfiles.Location
 import io.javalin.http.{Handler, HandlerType}
@@ -10,15 +10,15 @@ import io.javalin.util.JavalinLogger
 import golden.framework.OptionExtensions.tap
 import io.javalin.json.JsonMapper as JavalinJsonMapper
 import java.io.{ByteArrayInputStream, InputStream}
-import java.lang.reflect.Type
+import java.lang.reflect.Type as JType
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.collection.mutable.{ArrayBuffer as MutableArray, HashMap as MutableMap}
 
-private[web] class JavalinApplicationBuilder extends ApplicationBuilder:
+private class JavalinApplicationBuilder extends ApplicationBuilder:
 
   private var _scopedMethods = Seq("POST", "PUT", "PATCH", "DELETE", "GET")
   private val _modules = MutableArray.empty[Module]
-  private val _handlerTypes = MutableMap.empty[TypeInfo, Iterable[HttpMethodAnnotation]]
+  private val _handlerTypes = MutableMap.empty[Type, Iterable[HttpMethodAnnotation]]
   private val _handlers = MutableArray.empty[(String, HttpContext => Unit, Iterable[HandlerType])]
   private var _commandLineArgs = Seq.empty[String]
   private var _logRequests: Option[Boolean] = None
@@ -39,7 +39,7 @@ private[web] class JavalinApplicationBuilder extends ApplicationBuilder:
     this
   }
 
-  def addHandlerType(handlerType: TypeInfo, methods: Iterable[HttpMethodAnnotation]): ApplicationBuilder = {
+  def addHandlerType(handlerType: Type, methods: Iterable[HttpMethodAnnotation]): ApplicationBuilder = {
     _handlerTypes.update(handlerType, methods)
     this
   }
@@ -132,16 +132,16 @@ private[web] class JavalinApplicationBuilder extends ApplicationBuilder:
   private def createJsonMapper(jsonMapper: JsonMapper): JavalinJsonMapper = {
     new JavalinJsonMapper {
 
-      override def toJsonString(obj: Any, tpe: Type): String =
+      override def toJsonString(obj: Any, tpe: JType): String =
         jsonMapper.serialize(obj)
 
-      override def toJsonStream(obj: Any, tpe: Type): InputStream =
+      override def toJsonStream(obj: Any, tpe: JType): InputStream =
         ByteArrayInputStream(toJsonString(obj, tpe).getBytes(UTF_8))
 
-      override def fromJsonString[T](json: String, tpe: Type): T =
+      override def fromJsonString[T](json: String, tpe: JType): T =
         jsonMapper.deserialize[T](json, tpe)
 
-      override def fromJsonStream[T](json: InputStream, tpe: Type): T =
+      override def fromJsonStream[T](json: InputStream, tpe: JType): T =
         jsonMapper.deserialize[T](json, tpe)
     }
   }
@@ -206,7 +206,7 @@ private[web] class JavalinApplicationBuilder extends ApplicationBuilder:
         app.addHandler(handlerType, httpMethod.path, handler)
       }
 
-    def createJavalinHandler(handlerType: TypeInfo): Handler = { context =>
+    def createJavalinHandler(handlerType: Type): Handler = { context =>
       val httpContext = context.attribute[HttpContext]("httpContext")
       val scope = context.attribute[Container]("scope")
       val handler = scope.get(handlerType).asInstanceOf[RequestHandler]
@@ -222,7 +222,7 @@ private[web] class JavalinApplicationBuilder extends ApplicationBuilder:
     case _: httpDelete => HandlerType.DELETE
     case _ => throw IllegalArgumentException(s"invalid http method: ${httpMethod.getClass}")
 
-  private[web] class ApplicationWrapper:
+  private class ApplicationWrapper:
     private var _app: Option[Application] = None
 
     def get: Application = _app.getOrElse {

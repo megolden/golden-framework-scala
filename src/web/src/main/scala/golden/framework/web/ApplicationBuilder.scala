@@ -1,7 +1,7 @@
 package golden.framework.web
 
 import golden.framework.bind.Module
-import golden.framework.{Macros, TypeInfo, typeOf}
+import golden.framework.{Macros, Type, typeOf}
 
 trait ApplicationBuilder:
 
@@ -11,7 +11,7 @@ trait ApplicationBuilder:
 
   def logging(enable: Boolean): ApplicationBuilder
 
-  private[web] def addHandlerType(handlerType: TypeInfo, methods: Iterable[HttpMethodAnnotation]): ApplicationBuilder
+  private[web] def addHandlerType(handlerType: Type, methods: Iterable[HttpMethodAnnotation]): ApplicationBuilder
 
   final inline def addHandler[THandler <: RequestHandler](): ApplicationBuilder = {
     val handlerType = typeOf[THandler]

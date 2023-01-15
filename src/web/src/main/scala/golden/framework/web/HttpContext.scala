@@ -1,7 +1,6 @@
 package golden.framework.web
 
-import golden.framework.typeOf
-import java.lang.reflect.Type
+import golden.framework.{typeOf, Type}
 import java.net.HttpURLConnection.{HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_NO_CONTENT}
 
 trait HttpContext:
@@ -28,11 +27,9 @@ trait HttpContext:
   def contentType(contentType: String): HttpContext
 
   inline final def bodyAs[T]: T =
-    bodyAs[T](typeOf[T].asClass.asInstanceOf[Class[T]])
+    bodyAs(typeOf[T]).asInstanceOf[T]
 
-  protected def bodyAs[T](clazz: Class[T]): T
-
-  protected def bodyAs[T](tpe: Type): T
+  def bodyAs(tpe: Type): Any
 
   def pathParam(name: String): Option[String]
 

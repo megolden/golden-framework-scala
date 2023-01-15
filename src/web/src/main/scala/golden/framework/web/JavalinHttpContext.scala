@@ -2,9 +2,9 @@ package golden.framework.web
 
 import io.javalin.http.{Context, UploadedFile as JavalinUploadedFile}
 import java.io.InputStream
-import java.lang.reflect.Type
+import golden.framework.Type
 
-private[web] class JavalinHttpContext(private var context: Context) extends HttpContext:
+private class JavalinHttpContext(private var context: Context) extends HttpContext:
 
   def url: String = context.fullUrl
 
@@ -28,11 +28,8 @@ private[web] class JavalinHttpContext(private var context: Context) extends Http
     this
   }
 
-  protected def bodyAs[T](clazz: Class[T]): T =
-    context.bodyAsClass[T](clazz)
-
-  protected def bodyAs[T](tpe: Type): T =
-    context.bodyAsClass[T](tpe)
+  override def bodyAs(tpe: Type): Any =
+    context.bodyAsClass(tpe.getType)
 
   def pathParam(name: String): Option[String] =
     Option(context.pathParamMap.get(name))
