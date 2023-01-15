@@ -1,20 +1,17 @@
 package golden.framework.bind
 
-import golden.framework.{TypeInfo, typeOf}
+import golden.framework.{Type, typeOf}
 
 trait ServiceRegistrationBuilder:
 
-  def as(serviceType: TypeInfo): ServiceRegistrationBuilder
-
-  final def as(serviceType: Class[?]): ServiceRegistrationBuilder =
-    as(TypeInfo.fromClass(serviceType))
+  def as(serviceType: Type): ServiceRegistrationBuilder
 
   inline final def as[T](): ServiceRegistrationBuilder =
     as(typeOf[T])
 
   def asSelf(): ServiceRegistrationBuilder
 
-  def usingConstructor(argTypes: TypeInfo*): ServiceRegistrationBuilder
+  def usingConstructor(params: Type*): ServiceRegistrationBuilder
 
   def asSingleton(): ServiceRegistrationBuilder
 

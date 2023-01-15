@@ -3,7 +3,6 @@ package golden.framework.bind
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.mockito.Mockito.*
-import golden.framework.{TypeInfo, typeOf}
 import java.io.Closeable
 import scala.collection.mutable
 
@@ -117,7 +116,7 @@ class ContainerTests extends AnyFunSuite with Matchers:
     val instance1 = container.get[SomeTransientService]
     val instance2 = container.get[SomeTransientService]
 
-    instance1 should not be theSameInstanceAs (instance2)
+    instance2 should not be theSameInstanceAs (instance1)
   }
 
   test("scoped service should instantiate properly") {

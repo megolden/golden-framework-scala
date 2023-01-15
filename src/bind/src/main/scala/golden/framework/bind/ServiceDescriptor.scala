@@ -1,9 +1,9 @@
 package golden.framework.bind
 
-import golden.framework.TypeInfo
+import golden.framework.Type
 
-private[bind] class ServiceDescriptor(
-  val serviceTypes: Iterable[TypeInfo],
+private class ServiceDescriptor(
+  val serviceTypes: Set[Type],
   val provider: ServiceProvider,
   val lifetime: ServiceLifetime,
   val externallyOwned: Boolean = false)

@@ -6,9 +6,9 @@ object ContainerBuilderExtensions:
   extension (builder: ContainerBuilder)
 
     inline def registerPackageServices[TPackageRoot](setup: ServiceRegistrationBuilder => ?): ContainerBuilder = {
-      val services = Macros.getAnnotatedPackageTypes[TPackageRoot, service]
-      services.foreach { case (tpe, serviceAnnotations, ctorParams) =>
-        val serviceBuilder = builder.registerServiceWithConstructor(tpe, serviceAnnotations, ctorParams)
+      val services = Macros.getAnnotatedPackageTypesWithCtor[TPackageRoot, service]
+      services.foreach { (tpe, serviceAnnotations, ctorParams) =>
+        val serviceBuilder = builder.registerService(tpe, serviceAnnotations).usingConstructor(ctorParams*)
         setup(serviceBuilder)
       }
       builder

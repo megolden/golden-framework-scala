@@ -50,31 +50,6 @@ class ContainerBuilderTests extends AnyFunSuite with Matchers:
     instance shouldBe a [SomeService]
   }
 
-  test("get should return service instance by type with default constructor") {
-    val container = aContainerWith { b =>
-      b.registerInstance[Seq[Int]](Seq(1, 2))
-      b.registerInstance[Seq[String]](Seq("Mehdi", "Reza"))
-      b.registerType[SomeServiceWithCtor]
-    }
-
-    val instance = container.get[SomeServiceWithCtor]
-
-    instance shouldBe a [SomeServiceWithCtor]
-    instance.codes shouldBe Seq(1, 2)
-    instance.names shouldBe Seq("Mehdi", "Reza")
-  }
-
-  test("get should return service instance by type with annotated constructor") {
-    val container = aContainerWith {
-      _.registerType[SomeServiceWithAnnotatedCtor]
-    }
-
-    val instance = container.get[SomeServiceWithAnnotatedCtor]
-
-    instance shouldBe a [SomeServiceWithAnnotatedCtor]
-    instance.code shouldBe 0
-  }
-
   test("get should return annotated service instance properly") {
     val container = aContainerWith {
       _.registerService[SomeAnnotatedService]()
@@ -110,10 +85,6 @@ class ContainerBuilderTests extends AnyFunSuite with Matchers:
   }
 
 class SomeService
-class SomeServiceWithCtor(val codes: Seq[Int], val names: Seq[String])
-class SomeServiceWithAnnotatedCtor(val code: Int) {
-  @inject def this() = this(0)
-}
 
 @service(typeOf[Ordered[Int]])
 @service

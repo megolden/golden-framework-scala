@@ -1,63 +1,66 @@
 package golden.framework.bind
 
-import golden.framework.{TypeInfo, typeOf}
+import golden.framework.{Type, typeOf, ParameterizedType}
 import scala.collection.mutable
 import java.io.Closeable
 import ServiceLifetime.*
 
-private[bind] class ContainerImpl private(
+private class ContainerImpl private(
   registry: Seq[ServiceDescriptor],
   singletonInstances: mutable.Map[ServiceDescriptor, Any],
   val isRoot: Boolean,
   val tags: Set[Any],
-  _root: Option[Container])
+  rootContainer: Option[Container])
   extends Container:
 
   def this(registry: Seq[ServiceDescriptor], tags: Any*) =
-    this(registry, mutable.Map.empty, isRoot = true, Set("root") ++ tags, _root = None)
+    this(registry, mutable.Map.empty, isRoot = true, Set("root") ++ tags, rootContainer = None)
 
   private val _scopedInstances = mutable.HashMap.empty[ServiceDescriptor, Any]
   private val _closeableInstances = mutable.ArrayBuffer.empty[Closeable]
 
-  override val root: Container = _root.getOrElse(this)
+  override val root: Container = rootContainer.getOrElse(this)
 
-  override def get(serviceType: TypeInfo): Any = serviceType match {
-    case tpe if isLazyResolution(tpe) => resolveLazy(tpe)
-    case tpe if isCollectionResolution(tpe) => resolveCollection(tpe)
-    case tpe if isOptionResolution(tpe) => resolveOption(tpe)
-    case _ => resolveLast(serviceType)
+  override def get(serviceType: Type): Any = serviceType match {
+    case tpe if isLazyResolution(tpe) =>
+      resolveLazy(tpe.asInstanceOf[ParameterizedType].args.head)
+    case tpe if isCollectionResolution(tpe) =>
+      resolveCollection(tpe.asInstanceOf[ParameterizedType].args.head)
+    case tpe if isOptionResolution(tpe) =>
+      resolveOption(tpe.asInstanceOf[ParameterizedType].args.head)
+    case _ =>
+      resolveLast(serviceType)
   }
 
-  private def findMatchServices(tpe: TypeInfo): Seq[ServiceDescriptor] =
-    registry.filter(_.serviceTypes.toSeq.contains(tpe))
+  private def findMatchServices(tpe: Type): Seq[ServiceDescriptor] =
+    registry.filter(_.serviceTypes.contains(tpe))
 
-  private def isLazyResolution(tpe: TypeInfo): Boolean =
+  private def isLazyResolution(tpe: Type): Boolean =
     tpe.symbolName == typeOf[Lazy[?]].symbolName
 
-  private def resolveLazy(lazyType: TypeInfo): Any = {
-    val serviceType = lazyType.args.head
+  private def resolveLazy(serviceType: Type): Any = {
     val container = this
     new Lazy[Any] {
       override lazy val get: Any = container.get(serviceType)
     }
   }
 
-  private def isOptionResolution(tpe: TypeInfo): Boolean =
+  private def isOptionResolution(tpe: Type): Boolean =
     tpe.symbolName == typeOf[Option[?]].symbolName
 
-  private def resolveOption(serviceType: TypeInfo): Option[?] =
-    findMatchServices(serviceType.args.head).lastOption.map(get)
+  private def resolveOption(serviceType: Type): Option[?] =
+    findMatchServices(serviceType).lastOption.map(get)
 
-  private def resolveLast(serviceType: TypeInfo): Any =
+  private def resolveLast(serviceType: Type): Any =
     findMatchServices(serviceType).lastOption.map(get).getOrElse {
       throw ServiceResolutionException(serviceType)
     }
 
-  private def isCollectionResolution(tpe: TypeInfo): Boolean =
+  private def isCollectionResolution(tpe: Type): Boolean =
     tpe.symbolName == typeOf[Iterable[?]].symbolName
 
-  private def resolveCollection(serviceType: TypeInfo): Seq[?] =
-    findMatchServices(serviceType.args.head).map(get)
+  private def resolveCollection(serviceType: Type): Seq[Any] =
+    findMatchServices(serviceType).map(get)
 
   private def get(descriptor: ServiceDescriptor): Any = {
     val instance = descriptor.lifetime match {

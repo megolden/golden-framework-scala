@@ -1,6 +1,6 @@
 package golden.framework.bind
 
-import golden.framework.TypeInfo
+import golden.framework.Type
 
 class ServiceResolutionException(message: String) extends Exception(message):
-  def this(tpe: TypeInfo) = this(s"no service registered for '$tpe'")
+  def this(tpe: Type) = this(s"no service registered for: $tpe")

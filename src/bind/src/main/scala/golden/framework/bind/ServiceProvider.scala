@@ -1,7 +1,7 @@
 package golden.framework.bind
 
-import golden.framework.TypeInfo
+import golden.framework.Type
 
-trait ServiceProvider:
-  val implementationType: TypeInfo
+private trait ServiceProvider:
+  def implementationType: Type
   def get(injector: Container): Any

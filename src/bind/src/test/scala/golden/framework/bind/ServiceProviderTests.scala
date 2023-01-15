@@ -5,7 +5,6 @@ import org.scalatest.matchers.should.Matchers
 import golden.framework.typeOf
 import org.mockito.Mockito.*
 import org.mockito.ArgumentMatchers.any
-import javax.inject.Inject
 
 class ServiceProviderTests extends AnyFunSuite with Matchers:
 
@@ -39,34 +38,35 @@ class ServiceProviderTests extends AnyFunSuite with Matchers:
     instance shouldBe a [FakeService]
   }
 
-  test("type service provider should return an instance of service type with max parameter count constructor") {
+  test("type service provider should using non public constructor") {
     val container = mock(classOf[Container])
-    when(container.get(typeOf[String])).thenReturn("Mehdi")
-    val provider = TypeServiceProvider(typeOf[FakeServiceWithCtors])
+    val provider = TypeServiceProvider(typeOf[FakeServicePrivateCtor])
 
     val instance = provider.get(container)
 
-    instance shouldBe a [FakeServiceWithCtors]
-    verify(container, times(1)).get(typeOf[String])
+    instance shouldBe a [FakeServicePrivateCtor]
   }
 
-  test("type service provider should return an instance of service type with specified constructor") {
+  test("type service provider should using constructor with specified parameter types") {
     val container = mock(classOf[Container])
-    when(container.get(typeOf[Seq[Int]])).thenReturn(Seq(1, 2, 3))
-    when(container.get(typeOf[Seq[String]])).thenReturn(Seq("Mehdi", "Reza"))
-    val provider = TypeServiceProvider(typeOf[FakeServiceWithCtor], Seq(typeOf[Seq[Int]], typeOf[Seq[String]]))
+    when(container.get(typeOf[String])).thenReturn("Mehdi")
+    val provider = TypeServiceProvider(typeOf[FakeServiceWithCtor], Seq(typeOf[String]))
 
     val instance = provider.get(container)
 
     instance shouldBe a [FakeServiceWithCtor]
-    verify(container, times(1)).get(typeOf[Seq[Int]])
-    verify(container, times(1)).get(typeOf[Seq[String]])
+    verify(container, times(1)).get(typeOf[String])
   }
 
-  test("type service provider should throw exception when no public constructor found") {
-    an [Exception] should be thrownBy {
-      new TypeServiceProvider(typeOf[FakeServicePrivateCtor])
-    }
+  test("type service provider should using public constructor first, and then non public") {
+    val container = mock(classOf[Container])
+    when(container.get(typeOf[String])).thenReturn("some")
+    val provider = TypeServiceProvider(typeOf[FakeServicePublicPrivateCtors])
+
+    val instance = provider.get(container)
+
+    instance shouldBe a [FakeServicePublicPrivateCtors]
+    verify(container, times(1)).get(typeOf[String])
   }
 
   test("type service provider should return an instance of service type with annotated constructor") {
@@ -80,9 +80,13 @@ class ServiceProviderTests extends AnyFunSuite with Matchers:
   }
 
 class FakeService
-class FakeServiceWithCtors(name: String) { def this() = this("NoName") }
-class FakeServiceWithCtor(codes: Seq[Int], names: Seq[String])
-class FakeServicePrivateCtor private() /* private constructor */
+class FakeServicePrivateCtor private()
+class FakeServicePublicPrivateCtors private() {
+  def this(code: String) = this()
+}
+class FakeServiceWithCtor(code: Int) {
+  def this(name: String) = this(0)
+}
 class FakeServiceWithAnnotatedCtor(code: Int, name: String) {
-  @Inject def this() = this(0, "")
+  @inject def this() = this(0, "")
 }

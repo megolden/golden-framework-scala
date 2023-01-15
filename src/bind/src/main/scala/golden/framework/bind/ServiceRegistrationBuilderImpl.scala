@@ -1,21 +1,21 @@
 package golden.framework.bind
 
-import golden.framework.TypeInfo
+import golden.framework.Type
 import scala.collection.mutable
 import ServiceLifetime.*
 
-private[bind] class ServiceRegistrationBuilderImpl(
-  implementationType: TypeInfo,
+private class ServiceRegistrationBuilderImpl(
+  implementationType: Type,
   instance: Option[Any] = None,
   factory: Option[Container => Any] = None)
   extends ServiceRegistrationBuilder:
 
-  private val _serviceTypes = mutable.ArrayBuffer.empty[TypeInfo]
+  private val _serviceTypes = mutable.ArrayBuffer.empty[Type]
   private var _lifetime = Transient
   private var _externallyOwned = false
-  private var _constructorParameterTypes = Seq.empty[TypeInfo]
+  private var _ctorParams: Option[Seq[Type]] = None
 
-  override def as(serviceType: TypeInfo): ServiceRegistrationBuilder = {
+  override def as(serviceType: Type): ServiceRegistrationBuilder = {
     _serviceTypes += serviceType
     this
   }
@@ -23,8 +23,8 @@ private[bind] class ServiceRegistrationBuilderImpl(
   override def asSelf(): ServiceRegistrationBuilder =
     as(implementationType)
 
-  override def usingConstructor(argTypes: TypeInfo*): ServiceRegistrationBuilder = {
-    _constructorParameterTypes = argTypes
+  override def usingConstructor(params: Type*): ServiceRegistrationBuilder = {
+    _ctorParams = Some(params)
     this
   }
 
@@ -49,10 +49,13 @@ private[bind] class ServiceRegistrationBuilderImpl(
   }
 
   def build(): ServiceDescriptor = {
-    val serviceTypes = if _serviceTypes.isEmpty then Seq(implementationType) else _serviceTypes
+    val serviceTypes = if _serviceTypes.isEmpty then Set(implementationType) else _serviceTypes.toSet
     val provider: ServiceProvider =
       instance.map(InstanceServiceProvider(implementationType, _))
       .orElse(factory.map(FactoryServiceProvider(implementationType, _)))
-      .getOrElse(TypeServiceProvider(implementationType, _constructorParameterTypes))
+      .getOrElse {
+        if _ctorParams.isEmpty then TypeServiceProvider(implementationType)
+        else TypeServiceProvider(implementationType, _ctorParams.get)
+      }
     ServiceDescriptor(serviceTypes, provider, _lifetime, _externallyOwned)
   }

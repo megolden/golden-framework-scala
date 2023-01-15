@@ -1,7 +1,7 @@
 package golden.framework.bind
 
-import golden.framework.TypeInfo
+import golden.framework.Type
 
-class FactoryServiceProvider(tpe: TypeInfo, factory: Container => Any) extends ServiceProvider:
-  override val implementationType: TypeInfo = tpe
+private class FactoryServiceProvider(tpe: Type, factory: Container => Any) extends ServiceProvider:
+  override def implementationType: Type = tpe
   override def get(injector: Container): Any = factory(injector)

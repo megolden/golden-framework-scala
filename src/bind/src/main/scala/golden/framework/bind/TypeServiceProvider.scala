@@ -1,42 +1,50 @@
 package golden.framework.bind
 
-import golden.framework.TypeInfo
-import TypeServiceProvider.resolveConstructor
-import java.lang.reflect.Modifier
+import golden.framework.Type
+import java.lang.reflect.{Modifier, Constructor}
 import javax.inject.Inject
+import golden.framework.bind.inject
+import golden.framework.OptionExtensions.tap
 
-class TypeServiceProvider(tpe: TypeInfo, constructorParameters: Seq[TypeInfo]) extends ServiceProvider:
+private class TypeServiceProvider private extends ServiceProvider:
 
-  override val implementationType: TypeInfo = tpe
-  private val _provider = createProviderFromConstructor(tpe, constructorParameters)
+  private var _implType: Type = _
+  private var _provider: Container => Any = _
 
-  def this(tpe: TypeInfo) =
-    this(tpe, resolveConstructor(tpe))
+  override def implementationType: Type = _implType
 
-  override def get(injector: Container): Any = {
+  def this(tpe: Type) = {
+    this()
+    _implType = tpe
+    val (ctor, params) = findConstructor(tpe, None)
+    _provider = createProvider(ctor, params)
+  }
+
+  def this(tpe: Type, constructorParams: Seq[Type]) = {
+    this()
+    _implType = tpe
+    val (ctor, _) = findConstructor(tpe, Some(constructorParams))
+    _provider = createProvider(ctor, constructorParams)
+  }
+
+  override def get(injector: Container): Any =
     _provider.apply(injector)
-  }
 
-  private def createProviderFromConstructor(tpe: TypeInfo, constructorParameters: Seq[TypeInfo]): Container => Any = {
-    val constructor = tpe.asClass.getDeclaredConstructor(constructorParameters.map(_.asClass) *)
+  private def createProvider(constructor: Constructor[?], params: Seq[Type]): Container => Any = {
     injector =>
-      val args = constructorParameters.map(injector.get(_))
-      constructor.newInstance(args *)
+      val args = params.map(injector.get)
+      constructor.newInstance(args*)
   }
 
-object TypeServiceProvider:
-
-  inline def resolveConstructor[T](): Seq[TypeInfo] = {
-    Macros.findInjectableCtorParamTypes[T]
-  }
-
-  private def resolveConstructor(tpe: TypeInfo): Seq[TypeInfo] = {
-    val constructors = tpe.asClass.getDeclaredConstructors.filter(ctor => Modifier.isPublic(ctor.getModifiers))
-      constructors
-      .find(_.isAnnotationPresent(classOf[Inject]))
-      .orElse(constructors.sortBy(_.getParameterCount)(Ordering[Int].reverse).headOption)
-      .map(_.getParameterTypes.map(TypeInfo.fromClass))
-      .getOrElse {
-        throw Exception(s"can't resolve suitable constructor for type: $tpe")
-      }
+  private def findConstructor(tpe: Type, params: Option[Seq[Type]]): (Constructor[?], Seq[Type]) = {
+    val constructors = tpe.getRawType.getDeclaredConstructors
+      .filter(ctor => params.map(_.map(_.getType)).forall(_ == ctor.getGenericParameterTypes.toSeq))
+      .sortBy(ctor => Modifier.isPublic(ctor.getModifiers))(Ordering[Boolean].reverse)
+    constructors
+      .find(_.isAnnotationPresent(classOf[inject]))
+      .orElse(constructors.find(_.isAnnotationPresent(classOf[Inject])))
+      .orElse(constructors.headOption)
+      .tap(_.trySetAccessible())
+      .map(ctor => (ctor, ctor.getGenericParameterTypes.toSeq.map(Type.of)))
+      .getOrElse { throw Exception(s"can't resolve suitable constructor for type: $tpe") }
   }

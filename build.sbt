@@ -63,7 +63,9 @@ lazy val bind = project
     libraryDependencies ++= Seq(
       "javax.inject" % "javax.inject" % "1"
     ),
-    libraryDependencies ++= testLibraries,
+    libraryDependencies ++= testLibraries ++ Seq(
+      "com.google.inject" % "guice" % "5.1.0" % Test
+    ),
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
     publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
   )
