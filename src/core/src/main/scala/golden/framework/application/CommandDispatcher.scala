@@ -1,6 +1,6 @@
 package golden.framework.application
 
-import golden.framework.{TypeInfo, typeOf}
+import golden.framework.{Type, typeOf}
 
 trait CommandDispatcher:
 
@@ -8,4 +8,4 @@ trait CommandDispatcher:
     dispatch[TCommand, TResponse](command, typeOf[TCommand], typeOf[TResponse])
 
   protected def dispatch[TCommand <: Command[TResponse], TResponse]
-    (command: TCommand, commandType: TypeInfo, responseType: TypeInfo): TResponse
+    (command: TCommand, commandType: Type, responseType: Type): TResponse

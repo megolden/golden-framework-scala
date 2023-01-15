@@ -1,6 +1,6 @@
 package golden.framework.application
 
-import golden.framework.{TypeInfo, typeOf}
+import golden.framework.{Type, typeOf}
 
 trait QueryDispatcher:
 
@@ -9,5 +9,5 @@ trait QueryDispatcher:
 
   protected def dispatch[TQuery <: Query[TResult], TResult](
     query: TQuery,
-    queryType: TypeInfo,
-    resultType: TypeInfo): TResult
+    queryType: Type,
+    resultType: Type): TResult

@@ -9,11 +9,7 @@ import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer
 import com.fasterxml.jackson.databind.module.{SimpleDeserializers, SimpleKeyDeserializers, SimpleModule}
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer
 import scala.reflect.Enum
-
-private def findEnumFromOrdinalMethod(enumType: Class[?]): java.lang.reflect.Method =
-  enumType.getDeclaredMethod("fromOrdinal", classOf[Int])
-private def findEnumFromNameMethod(enumType: Class[?]): java.lang.reflect.Method =
-  enumType.getDeclaredMethod("valueOf", classOf[String])
+import golden.framework.ClassUtils.{findEnumFromOrdinalMethod, findEnumFromNameMethod}
 
 class EnumModule extends SimpleModule:
   addSerializer(EnumSerializer())
@@ -37,16 +33,12 @@ class EnumKeySerializer extends StdScalarSerializer[Enum](classOf[Enum]):
 
 class EnumDeserializer[T <: Enum](enumType: Class[T]) extends StdScalarDeserializer[T](enumType):
 
-  private val _fromOrdinal = findEnumFromOrdinalMethod(enumType)
-  private val _fromName = findEnumFromNameMethod(enumType)
+  private val _fromOrdinal = findEnumFromOrdinalMethod[T](enumType)
+  private val _fromName = findEnumFromNameMethod[T](enumType)
 
   override def deserialize(parser: JsonParser, context: DeserializationContext): T =
-    if (parser.hasToken(JsonToken.VALUE_NUMBER_INT))
-      val ordinal = parser.getIntValue
-      _fromOrdinal.invoke(null, ordinal).asInstanceOf[T]
-    else
-      val name = parser.getValueAsString
-      _fromName.invoke(null, name).asInstanceOf[T]
+    if parser.hasToken(JsonToken.VALUE_NUMBER_INT) then _fromOrdinal(parser.getIntValue)
+    else _fromName(parser.getValueAsString)
 
 class EnumKeyDeserializer(enumType: Class[? <: Enum]) extends KeyDeserializer:
 
@@ -55,12 +47,8 @@ class EnumKeyDeserializer(enumType: Class[? <: Enum]) extends KeyDeserializer:
 
   override def deserializeKey(key: String, context: DeserializationContext): AnyRef =
     val isOrdinal = Character.isDigit(key.charAt(0))
-    if (isOrdinal)
-      val ordinal = key.toInt
-      _fromOrdinal.invoke(null, ordinal)
-    else
-      val name = key
-      _fromName.invoke(null, name)
+    if isOrdinal then _fromOrdinal(key.toInt).asInstanceOf[AnyRef]
+    else _fromName(key).asInstanceOf[AnyRef]
 
 class EnumDeserializers extends SimpleDeserializers:
   override def findBeanDeserializer(

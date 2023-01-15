@@ -6,10 +6,10 @@ inline def default[A]: A =
 def nullAs[T]: T =
   null.asInstanceOf[T]
 
-inline def nameOf[A](inline expression: A => ?): String =
+inline def nameOf[A](inline expression: A): String =
   Macros.getFullNameOf[A](expression).split('.').last
 
-inline def fullNameOf[A](inline expression: A => ?): String =
+inline def fullNameOf[A](inline expression: A): String =
   Macros.getFullNameOf[A](expression)
 
 extension (value: Any)

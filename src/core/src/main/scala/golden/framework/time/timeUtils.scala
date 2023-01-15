@@ -3,7 +3,7 @@ package golden.framework.time
 import com.ibm.icu.util.{Calendar, ULocale}
 import golden.framework.OptionExtensions.tap
 
-private final def getPersianCalendar = Calendar.getInstance(ULocale("fa_IR@calendar=persian"))
+private def getPersianCalendar = Calendar.getInstance(ULocale("fa_IR@calendar=persian"))
 
 private def isLeapGregorianYear(year: Int): Boolean = {
   val gregorianCutoverYear = 1582
@@ -15,10 +15,10 @@ private def isLeapGregorianYear(year: Int): Boolean = {
 
 extension (calendar: Calendar)
 
-  private[time] def copy: Calendar =
+  private def copy: Calendar =
     calendar.clone.asInstanceOf[Calendar]
 
-  private[time] def set(
+  private def set(
     year: Int = Int.MinValue,
     month: Int = Int.MinValue,
     date: Int = Int.MinValue,
@@ -37,7 +37,7 @@ extension (calendar: Calendar)
     calendar
   }
 
-  private[time] def add(
+  private def add(
     year: Int = 0,
     month: Int = 0,
     date: Int = 0,

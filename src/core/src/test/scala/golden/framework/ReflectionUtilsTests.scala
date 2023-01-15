@@ -2,7 +2,6 @@ package golden.framework
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.Entry
 import golden.framework.ReflectionUtils.*
 import golden.framework.typeOf
 
@@ -25,11 +24,16 @@ class ReflectionUtilsTests extends AnyFunSuite with Matchers:
   test("getPackageAnnotatedTypes should return all package annotated types with specified annotation class") {
     val types = getPackageAnnotatedTypes[SomeWithAnotherAnnotatedClass, anotherAnnotation]
 
-    types should have size 2
-    types.keySet shouldBe Set(typeOf[SomeWithAnotherAnnotatedClass], typeOf[AnotherAnnotatedClass])
-    types(typeOf[SomeWithAnotherAnnotatedClass]).exists(_.isInstanceOf[someAnnotation]) shouldBe true
-    types(typeOf[SomeWithAnotherAnnotatedClass]).exists(_.isInstanceOf[anotherAnnotation]) shouldBe true
-    types(typeOf[AnotherAnnotatedClass]).exists(_.isInstanceOf[anotherAnnotation]) shouldBe true
+    types should have size 4
+    types.keySet shouldBe Set(
+      typeOf[SomeWithAnotherAnnotatedClass],
+      typeOf[AnotherAnnotatedClass],
+      typeOf[SomeAnnotatedEnum],
+      typeOf[SomeAnnotatedTrait])
+    types(typeOf[SomeWithAnotherAnnotatedClass]) should have size 1
+    types(typeOf[AnotherAnnotatedClass]) should have size 1
+    types(typeOf[SomeAnnotatedEnum]) should have size 1
+    types(typeOf[SomeAnnotatedTrait]) should have size 1
   }
 
   test("getAnnotatedMembers should return all members annotated with specified annotation") {
@@ -55,6 +59,12 @@ class SomeWithAnotherAnnotatedClass
 
 @anotherAnnotation
 class AnotherAnnotatedClass
+
+@anotherAnnotation
+enum SomeAnnotatedEnum { case Red }
+
+@anotherAnnotation
+trait SomeAnnotatedTrait
 
 class someAnnotation extends scala.annotation.StaticAnnotation
 class anotherAnnotation extends scala.annotation.StaticAnnotation

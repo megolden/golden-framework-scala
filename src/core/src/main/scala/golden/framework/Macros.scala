@@ -1,30 +1,35 @@
 package golden.framework
 
 import quoted.*
+import golden.framework.{Type as FType, TypeImpl, ParameterizedTypeImpl, WildcardTypeImpl}
 
-private[framework] object Macros:
+private object Macros:
 
   private type _Symbol = Any
   private type _TypeRepr = Any
+  private type _Term = Any
 
-  inline def getType[A]: TypeInfo = ${ getTypeImpl[A] }
-  private def getTypeImpl[A: Type](using Quotes): Expr[TypeInfo] =
-    typeToExpr(quotes.reflect.TypeRepr.of[A])
+  inline def getType[T]: FType = ${ getTypeImpl[T] }
+  private def getTypeImpl[T: Type](using Quotes): Expr[FType] =
+    typeToExpr(quotes.reflect.TypeRepr.of[T])
 
-  inline def getFullNameOf[A](inline expr: A => ?): String = ${ getFullNameOfImpl[A]('{expr}) }
-  private def getFullNameOfImpl[A](expr: Expr[A => ?])(using Quotes): Expr[String] = {
+  inline def getFullNameOf[A](inline expr: A): String = ${ getFullNameOfImpl[A]('{expr}) }
+  private def getFullNameOfImpl[A](expr: Expr[A])(using Quotes): Expr[String] = {
     import quotes.reflect.*
 
-    def resolveTermName(term: Term): String = term match {
-      case Apply(select: Select, _) => resolveTermName(select)
-      case Apply(_, items: Iterable[Term]) => items.map(resolveTermName).mkString(".")
-      case Select(Ident(_), name) => name
-      case Select(applyOrSelect, name) => resolveTermName(applyOrSelect) + "." + name
-      case Inlined(_, _, Block(List(DefDef(_, _, _, Some(applyOrSelect))), _)) => resolveTermName(applyOrSelect)
-      case Inlined(_, _, inlined: Inlined) => resolveTermName(inlined)
-      case Ident(name) => name
+    def resolveTermName(term: Term): Option[String] = term match {
+      case Apply(term, args) =>
+        Some((resolveTermName(term) ++ args.map(resolveTermName).flatten).mkString(".")).filter(_.nonEmpty)
+      case Select(term, name) =>
+        Some((resolveTermName(term) ++ Some(name)).mkString(".")).filter(_.nonEmpty)
+      case Block(List(DefDef(_, _, _, Some(term))), _) => resolveTermName(term)
+      case Inlined(_, _, term) => resolveTermName(term)
+      case _: Typed => None
+      case Ident(underscore) if underscore.matches("""^_\$\d+$""") => None
+      case Ident(augment) if augment == "augmentString" => None
+      case Ident(name) => Some(name)
     }
-    val name = resolveTermName(expr.asTerm)
+    val name = resolveTermName(expr.asTerm).getOrElse("")
     Expr(name)
   }
 
@@ -48,8 +53,8 @@ private[framework] object Macros:
     Expr.ofSeq(annotations)
   }
 
-  inline def getAnnotatedMembers[T, A]: Iterable[(String, TypeInfo, Iterable[A])] = ${ getAnnotatedMembersImpl[T, A] }
-  private def getAnnotatedMembersImpl[T: Type, A: Type](using Quotes): Expr[Iterable[(String, TypeInfo, Iterable[A])]] = {
+  inline def getAnnotatedMembers[T, A]: Iterable[(String, FType, Iterable[A])] = ${ getAnnotatedMembersImpl[T, A] }
+  private def getAnnotatedMembersImpl[T: Type, A: Type](using Quotes): Expr[Iterable[(String, FType, Iterable[A])]] = {
     import quotes.reflect.*
 
     val typeSymbol = TypeRepr.of[T].typeSymbol
@@ -61,13 +66,13 @@ private[framework] object Macros:
         .filter(_.tpe <:< annotationType)
     }
 
-    def getMemberType(member: Symbol): _TypeRepr = {
+    def getMemberType(member: Symbol): TypeRepr = {
       member.tree match
         case ValDef(_, t, _) => t.tpe
         case DefDef(_, _, t, _) => t.tpe
     }
 
-    def toExpr(member: Symbol, annotations: Seq[Term]): Expr[(String, TypeInfo, Iterable[A])] = {
+    def toExpr(member: Symbol, annotations: Seq[Term]): Expr[(String, FType, Iterable[A])] = {
       val name = member.name
       val memberAnnotations = annotations.map(_.asExprOf[A])
       val tpe = getMemberType(member)
@@ -92,74 +97,60 @@ private[framework] object Macros:
     Expr.ofSeq(annotations)
   }
 
-  inline def getAnnotatedPackageTypes[T, A]: Iterable[(TypeInfo, Iterable[?])] =
+  inline def getAnnotatedPackageTypes[T, A]: Iterable[(FType, Iterable[A])] =
     ${ getAnnotatedPackageTypesImpl[T, A] }
-  private def getAnnotatedPackageTypesImpl[T: Type, A: Type](using Quotes): Expr[Iterable[(TypeInfo, Iterable[?])]] = {
+  private def getAnnotatedPackageTypesImpl[T: Type, A: Type](using Quotes): Expr[Iterable[(FType, Iterable[A])]] = {
     import quotes.reflect.*
 
-    def symbolToExpr(symbol: Symbol): Expr[(TypeInfo, Iterable[?])] = {
-      val annotations = symbol.annotations.map(_.asExpr)
-      '{(${symbolToTypeExpr(symbol)}, ${Expr.ofSeq(annotations)})}
+    def toExpr(tpe: TypeRepr, annotations: Seq[Term]): Expr[(FType, Iterable[A])] = {
+      '{(${typeToExpr(tpe)}, ${Expr.ofSeq(annotations.map(_.asExprOf[A]))})}
     }
 
-    val symbols = getPackageTypes(TypeRepr.of[T].typeSymbol.owner).map(_.asInstanceOf[Symbol])
-      .filterNot(_.isNoSymbol)
-      .filter(_.annotations.exists(_.tpe <:< TypeRepr.of[A]))
-
-    Expr.ofSeq(symbols.map(symbolToExpr))
+    Expr.ofSeq(
+      getAnnotatedPackageTypes(TypeRepr.of[T].typeSymbol.maybeOwner, TypeRepr.of[A])
+      .map((tpe, terms) => toExpr(tpe.asInstanceOf[TypeRepr], terms.map(_.asInstanceOf[Term]))))
   }
 
-  private def symbolToTypeExpr(symbol: _Symbol)(using Quotes): Expr[TypeInfo] = {
+  def getAnnotatedPackageTypes(packageSymbol: _Symbol, annotationType: _TypeRepr)(using Quotes): Seq[(_TypeRepr, Seq[_Term])] = {
     import quotes.reflect.*
 
-    val name = symbol.asInstanceOf[Symbol].fullName
-    val simpleName = symbol.asInstanceOf[Symbol].name
-    val isAbstract = symbol.asInstanceOf[Symbol].flags.is(Flags.Abstract)
-    val isEnum = symbol.asInstanceOf[Symbol].flags.is(Flags.Enum)
-    val paramInfos = symbol.asInstanceOf[Symbol].typeMembers.filter(_.isTypeParam)
-      .map(_ => typeToExpr(TypeRepr.of[scala.Nothing]))
-    '{TypeInfo(
-      ${Expr(name)},
-      ${Expr(simpleName)},
-      ${Expr(isAbstract)},
-      ${Expr(isEnum)},
-      ${Expr.ofSeq(paramInfos)})}
-  }
-
-  private def getPackageTypes(pack: _Symbol)(using Quotes): Seq[_Symbol] = {
-    import quotes.reflect.*
-
-    pack.asInstanceOf[Symbol].declaredTypes.flatMap {
-      case pack if pack.isPackageDef => getPackageTypes(pack)
-      case tpe if tpe.isClassDef => Seq(tpe)
+    val pkg = packageSymbol.asInstanceOf[Symbol]
+    val annType = annotationType.asInstanceOf[TypeRepr]
+    if pkg.isNoSymbol then return Nil
+    pkg.declaredTypes.flatMap {
+      case pkg if pkg.isPackageDef => getAnnotatedPackageTypes(pkg, annotationType)
+      case tpe if tpe.hasAnnotation(annType.typeSymbol) =>
+        Some((tpe.typeRef, tpe.annotations.filter(_.tpe <:< annType)))
       case _ => Nil
     }
   }
 
-  private def typeToExpr(tpe: _TypeRepr)(using Quotes): Expr[TypeInfo] = {
+  def typeToExpr(tpe: _TypeRepr)(using Quotes): Expr[FType] = {
     import quotes.reflect.*
 
-    def toTypeExpr(tpe: TypeRepr, params: Seq[TypeRepr] = Nil): Expr[TypeInfo] = {
-      val symbol = tpe.dealias.typeSymbol
-      val className = symbol.fullName
-      val simpleName = symbol.name
-      val isAbstract = symbol.flags.is(Flags.Abstract)
-      val isEnum = tpe <:< TypeRepr.of[scala.reflect.Enum]
-      val paramInfos = params.map(typeToExpr)
-      '{TypeInfo(
-        ${Expr(className)},
-        ${Expr(simpleName)},
-        ${Expr(isAbstract)},
-        ${Expr(isEnum)},
-        ${Expr.ofSeq(paramInfos)})}
-    }
-
-    tpe.asInstanceOf[TypeRepr] match {
-      case AppliedType(tpe, params) =>
-        toTypeExpr(tpe, params)
-      case TypeBounds(firstType, _) if firstType.typeSymbol == TypeRepr.of[Nothing].typeSymbol =>
-        toTypeExpr(firstType)
-      case other =>
-        toTypeExpr(other)
+    val realType = tpe.asInstanceOf[TypeRepr].dealias.simplified
+    val symbol = realType.typeSymbol
+    realType match {
+      case AppliedType(_, rawArgs) =>
+        val args = rawArgs.map(typeToExpr)
+        '{ new ParameterizedTypeImpl(
+          ${ Expr(symbol.fullName) },
+          ${ Expr(symbol.name) },
+          ${ Expr.ofSeq(args) })
+        }
+      case TypeBounds(rawLow, rawHi) =>
+        val low = typeToExpr(rawLow)
+        val hi = typeToExpr(rawHi)
+        '{ new WildcardTypeImpl(
+          ${ Expr("?") },
+          ${ Expr("?") },
+          ${ low },
+          ${ hi })
+        }
+      case _ =>
+        '{ new TypeImpl(
+          ${ Expr(symbol.fullName) },
+          ${ Expr(symbol.name) })
+        }
     }
   }

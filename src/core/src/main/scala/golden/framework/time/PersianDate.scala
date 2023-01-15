@@ -208,10 +208,10 @@ object PersianDate:
     }
   }
 
-  private[time] def fromCalendar(calendar: Calendar): PersianDate =
+  private[framework] def fromCalendar(calendar: Calendar): PersianDate =
     PersianDate(calendar)
 
-  private[time] def validate(year: Int, month: Int, dayOfMonth: Int): Unit = {
+  private[framework] def validate(year: Int, month: Int, dayOfMonth: Int): Unit = {
     if year < MinYear || year > MaxYear || year == 0 ||
        month < 1 || month > 12 ||
        dayOfMonth < 1 || dayOfMonth > daysInMonth(year, month) then

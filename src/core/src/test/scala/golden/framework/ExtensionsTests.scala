@@ -8,20 +8,36 @@ import golden.framework.StringUtils.Empty
 class ExtensionsTests extends AnyFunSuite with Matchers:
 
   test("nameOf should return name of field or method") {
-    nameOf[String](str => str) should be ("str")
-    nameOf[String](_.length) should be ("length")
-    nameOf[String](_.trim.length) should be ("length")
-    nameOf[String](_.trim.length.toString) should be ("toString")
-    nameOf[String](_.trim.length.toString.lengthIs) should be ("lengthIs")
-    nameOf[String](_.trim.length.toString.lengthIs.toLong) should be ("toLong")
+    inline def getNameOfLambda[T](inline p: T => ?): String = nameOf(p)
+
+    getNameOfLambda[String](str => str) should be ("str")
+    getNameOfLambda[String](_.length) should be ("length")
+    getNameOfLambda[String](_.trim.length) should be ("length")
+    getNameOfLambda[String](_.trim.length.toString) should be ("toString")
+    getNameOfLambda[String](_.trim.length.toString.lengthIs) should be ("lengthIs")
+    getNameOfLambda[String](_.trim.length.toString.lengthIs.toLong) should be ("toLong")
   }
 
   test("fullNameOf should return full name of call chain of call") {
-    fullNameOf[String](_.length) should be ("length")
-    fullNameOf[String](_.trim.length) should be ("trim.length")
-    fullNameOf[String](_.trim.length.toString) should be ("trim.length.toString")
-    fullNameOf[String](_.trim.length.toString.lengthIs) should be ("trim.length.toString.lengthIs")
-    fullNameOf[String](_.trim.length.toString.lengthIs.toLong) should be ("trim.length.toString.lengthIs.toLong")
+    val firstName: String = "some"
+    def getParamName(param: String): String = fullNameOf(param)
+    object Obj { def func: String = "" }
+    inline def getFullNameOfLambda[T](inline p: T => ?): String = fullNameOf(p)
+    val augmentString = "some"
+
+    fullNameOf(firstName) should be ("firstName")
+    fullNameOf(firstName) should be ("firstName")
+    fullNameOf(firstName.length) should be ("firstName.length")
+    fullNameOf(firstName.length.toString) should be ("firstName.length.toString")
+    getParamName(firstName) should be ("param")
+    fullNameOf(Obj.func) should be ("Obj.func")
+    fullNameOf((_:String).length) should be ("length")
+    getFullNameOfLambda[String](_.length) should be ("length")
+    getFullNameOfLambda[String](_.trim.length) should be ("trim.length")
+    getFullNameOfLambda[String](_.trim.length.toString) should be ("trim.length.toString")
+    getFullNameOfLambda[String](_.trim.length.toString.lengthIs) should be ("trim.length.toString.lengthIs")
+    getFullNameOfLambda[String](_.trim.length.toString.lengthIs.toLong) should be ("trim.length.toString.lengthIs.toLong")
+    fullNameOf(augmentString) shouldBe empty
   }
 
   test("default should return default value of specified type") {
