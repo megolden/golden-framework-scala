@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.dataformat.xml.annotation.{JacksonXmlProperty, JacksonXmlRootElement}
 import golden.framework.hibernate.mapping.PropertyAccess
 
-@JsonPropertyOrder(Array("key-property", "generator"))
+@JsonPropertyOrder(Array("name", "key-property", "generator"))
 @JacksonXmlRootElement(localName = "composite-id")
 class CompositeIdDef(
   val name: Option[String] = None,

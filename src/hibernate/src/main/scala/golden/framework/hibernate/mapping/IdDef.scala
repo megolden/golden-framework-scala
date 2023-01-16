@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.dataformat.xml.annotation.{JacksonXmlProperty, JacksonXmlRootElement}
 import golden.framework.hibernate.mapping.PropertyAccess
 
-@JsonPropertyOrder(Array("column", "type", "generator"))
+@JsonPropertyOrder(Array("name", "column", "type", "generator"))
 @JacksonXmlRootElement(localName = "id")
 class IdDef(
   val name: String,

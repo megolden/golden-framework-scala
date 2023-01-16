@@ -109,10 +109,13 @@ lazy val hibernate = project
     description := "a utility library for hibernate",
     libraryDependencies ++= Seq(
       "org.hibernate.orm" % "hibernate-core" % "6.1.6.Final",
+      "org.hibernate.orm" % "hibernate-ant" % "6.1.6.Final",
       "com.google.guava" % "guava" % "31.1-jre"
     ),
     libraryDependencies ++= testLibraries ++ Seq(
-      "org.hsqldb" % "hsqldb" % "2.7.1" % Test
+      "org.hsqldb" % "hsqldb" % "2.7.1" % Test,
+      "com.h2database" % "h2" % "2.1.214" % Test,
+      "org.mariadb.jdbc" % "mariadb-java-client" % "3.1.0" % Test
     ),
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
     publishM2Configuration := publishM2Configuration.value.withOverwrite(true)

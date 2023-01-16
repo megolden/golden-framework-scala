@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.{JacksonXmlProperty, Jack
 @JacksonXmlRootElement(localName = "class")
 class ClassDef(
   typeName: String,
+  val id: IdDef | CompositeIdDef,
   isAbstract: Option[Boolean] = None,
   lazyFetch: Option[Boolean] = None,
   dynamicUpdate: Option[Boolean] = None,
@@ -12,7 +13,6 @@ class ClassDef(
   val table: Option[String] = None,
   val schema: Option[String] = None,
   val mutable: Option[Boolean] = None,
-  val id: Option[IdDef | CompositeIdDef] = None,
   val discriminator: Option[DiscriminatorDef] = None,
   val discriminatorValue: Option[Any] = None,
   properties: Seq[PropertyDef] = Nil,
@@ -45,10 +45,16 @@ class ClassDef(
   private def getMutable = mutable.orNull
 
   @JacksonXmlProperty(localName = "id")
-  private def getId = id.collect({ case id: IdDef => id }).orNull
+  private def getId = id match {
+    case id: IdDef => id
+    case _ => null
+  }
 
   @JacksonXmlProperty(localName = "composite-id")
-  private def getCompositeId = id.collect({ case compositeId: CompositeIdDef => compositeId }).orNull
+  private def getCompositeId = id match {
+    case compositeId: CompositeIdDef => compositeId
+    case _ => null
+  }
 
   @JacksonXmlProperty(localName = "discriminator")
   private def getDiscriminator = discriminator.orNull
