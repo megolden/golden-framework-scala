@@ -19,21 +19,21 @@ trait ApplicationBuilder:
     addHandlerType(handlerType, methods)
   }
 
-  def addHandler(method: String, path: String, handler: HttpContext => Unit): ApplicationBuilder
+  def addHandler(method: String, path: String, handler: RequestHandler): ApplicationBuilder
 
-  final def addGetHandler(path: String, handler: HttpContext => Unit): ApplicationBuilder =
+  final def addGetHandler(path: String, handler: RequestHandler): ApplicationBuilder =
     addHandler("GET", path, handler)
 
-  final def addPostHandler(path: String, handler: HttpContext => Unit): ApplicationBuilder =
+  final def addPostHandler(path: String, handler: RequestHandler): ApplicationBuilder =
     addHandler("POST", path, handler)
 
-  final def addDeleteHandler(path: String, handler: HttpContext => Unit): ApplicationBuilder =
+  final def addDeleteHandler(path: String, handler: RequestHandler): ApplicationBuilder =
     addHandler("DELETE", path, handler)
 
-  final def addPatchHandler(path: String, handler: HttpContext => Unit): ApplicationBuilder =
+  final def addPatchHandler(path: String, handler: RequestHandler): ApplicationBuilder =
     addHandler("PATCH", path, handler)
 
-  final def addPutHandler(path: String, handler: HttpContext => Unit): ApplicationBuilder =
+  final def addPutHandler(path: String, handler: RequestHandler): ApplicationBuilder =
     addHandler("PUT", path, handler)
 
   def setCommandLineArgs(args: Seq[String]): ApplicationBuilder

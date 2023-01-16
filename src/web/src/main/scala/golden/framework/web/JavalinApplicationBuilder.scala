@@ -19,7 +19,7 @@ private class JavalinApplicationBuilder extends ApplicationBuilder:
   private var _scopedMethods = Seq("POST", "PUT", "PATCH", "DELETE", "GET")
   private val _modules = MutableArray.empty[Module]
   private val _handlerTypes = MutableMap.empty[Type, Iterable[HttpMethodAnnotation]]
-  private val _handlers = MutableArray.empty[(String, HttpContext => Unit, Iterable[HandlerType])]
+  private val _handlers = MutableArray.empty[(String, RequestHandler, Iterable[HandlerType])]
   private var _commandLineArgs = Seq.empty[String]
   private var _logRequests: Option[Boolean] = None
   private var _enableLogging = true
@@ -44,7 +44,7 @@ private class JavalinApplicationBuilder extends ApplicationBuilder:
     this
   }
 
-  def addHandler(method: String, path: String, handler: HttpContext => Unit): ApplicationBuilder = {
+  def addHandler(method: String, path: String, handler: RequestHandler): ApplicationBuilder = {
     _handlers += ((path, handler, method.toUpperCase.split(',').map(HandlerType.valueOf)))
     this
   }
@@ -192,7 +192,7 @@ private class JavalinApplicationBuilder extends ApplicationBuilder:
       .foreach { case ((path, handler), handlerType) =>
         val javalinHandler: Handler = { context =>
           val httpContext = context.attribute[HttpContext]("httpContext")
-          handler.apply(httpContext)
+          handler.handle(httpContext)
         }
         app.addHandler(handlerType, path, javalinHandler)
       }
