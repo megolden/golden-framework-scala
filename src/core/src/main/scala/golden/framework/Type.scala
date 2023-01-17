@@ -3,15 +3,21 @@ package golden.framework
 import java.lang.reflect.{Type as JType, ParameterizedType as JParameterizedType, WildcardType as JWildcardType}
 
 trait Type:
-  val name: String
   val symbolName: String
-  val simpleName: String
-  protected def internalGetType: JType
-  protected def internalGetRawType: Class[?]
-  def getType: JType =
+  def name: String = symbolName
+  def simpleName: String = symbolName
+  protected def internalGetRawType: Class[?] = Class.forName(symbolName)
+  protected def internalGetType: JType = internalGetRawType
+  final def getType: JType =
     getPrimitiveType.getOrElse(internalGetType)
-  def getRawType: Class[?] =
+  final def getRawType: Class[?] =
     getPrimitiveType.getOrElse(internalGetRawType)
+  override def toString: String = name
+  override def hashCode: Int = name.hashCode
+  override def equals(obj: Any): Boolean = obj match {
+    case that: Type => this.name == that.name
+    case _ => false
+  }
   private def getPrimitiveType: Option[Class[?]] = name match {
     case "scala.Byte" => Some(classOf[Byte])
     case "scala.Short" => Some(classOf[Short])
@@ -29,12 +35,6 @@ trait Type:
     case "scala.AnyRef" => Some(classOf[AnyRef])
     case _ => None
   }
-  override def toString: String = name
-  override def hashCode: Int = name.hashCode
-  override def equals(obj: Any): Boolean = obj match {
-    case that: Type => this.name == that.name
-    case _ => false
-  }
 
 object Type:
 
@@ -45,37 +45,13 @@ object Type:
     case param: JParameterizedType =>
       new ParameterizedTypeImpl(
         param.getRawType.getTypeName,
-        getSimpleName(param),
         param.getActualTypeArguments.map(of))
     case wildcard: JWildcardType =>
       new WildcardTypeImpl(
-        wildcard.getTypeName,
-        getSimpleName(wildcard),
         wildcard.getLowerBounds.headOption.map(of).getOrElse(Type.of[Nothing]),
         wildcard.getUpperBounds.headOption.map(of).getOrElse(Type.of[Any]))
     case _ =>
-      new TypeImpl(tpe.getTypeName, getSimpleName(tpe))
+      new TypeImpl(tpe.getTypeName)
   }
 
   def of(clazz: Class[?]): Type = of(clazz.asInstanceOf[JType])
-
-  private def getSimpleName(tpe: JType): String = {
-    tpe match {
-      case clazz: Class[?] =>
-        clazz.getSimpleName
-      case _ =>
-        var name = tpe.getTypeName
-        var i = name.indexOf('<')
-        if i >= 0 then name = name.substring(0, i)
-        i = name.indexOf('[')
-        if i >= 0 then name = name.substring(0, i)
-        i = name.lastIndexOf('$')
-        if i >= 0 then name = name.substring(i + 1)
-        i = name.lastIndexOf('#')
-        if i >= 0 then name = name.substring(i + 1)
-        i = name.lastIndexOf(':')
-        if i >= 0 then name = name.substring(i + 1)
-        i = name.indexOf('.')
-        if i >= 0 then name.substring(i + 1) else name
-    }
-  }

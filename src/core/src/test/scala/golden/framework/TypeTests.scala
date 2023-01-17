@@ -10,17 +10,21 @@ class TypeTests extends AnyFunSuite with Matchers:
 
   test("of should create type literal properly") {
     val simple = Type.of[Boolean]
-    val param = Type.of[Map[Int, String]]
+    val alias = Type.of[scala.Predef.String]
+    val parameterized = Type.of[Map[Int, String]]
     val wildcardNoBound = Type.of[Option[?]].asInstanceOf[ParameterizedType].args.head
     val wildcardUpperBound = Type.of[Option[? <: Number]].asInstanceOf[ParameterizedType].args.head
     val wildcardLowerBound = Type.of[Option[? >: Serializable]].asInstanceOf[ParameterizedType].args.head
     val wildcardUpperLowerBound = Type.of[Option[? >: Number <: Serializable]].asInstanceOf[ParameterizedType].args.head
+    val intersection = Type.of[Boolean & String]
+    val union = Type.of[Boolean | String]
 
     simple shouldBe a [Type]
-    simple.getRawType shouldBe classOf[Boolean]
 
-    param shouldBe a [ParameterizedType]
-    param.asInstanceOf[ParameterizedType].args shouldBe Seq(Type.of[Int], Type.of[String])
+    alias shouldBe a [Type]
+
+    parameterized shouldBe a [ParameterizedType]
+    parameterized.asInstanceOf[ParameterizedType].args shouldBe Seq(Type.of[Int], Type.of[String])
 
     wildcardNoBound shouldBe a [WildcardType]
     wildcardNoBound.asInstanceOf[WildcardType].hi shouldBe Type.of[Any]
@@ -37,6 +41,14 @@ class TypeTests extends AnyFunSuite with Matchers:
     wildcardUpperLowerBound shouldBe a [WildcardType]
     wildcardUpperLowerBound.asInstanceOf[WildcardType].hi shouldBe Type.of[Serializable]
     wildcardUpperLowerBound.asInstanceOf[WildcardType].low shouldBe Type.of[Number]
+
+    intersection shouldBe a [IntersectionType]
+    intersection.asInstanceOf[IntersectionType].left shouldBe Type.of[Boolean]
+    intersection.asInstanceOf[IntersectionType].right shouldBe Type.of[String]
+
+    union shouldBe a [UnionType]
+    union.asInstanceOf[UnionType].left shouldBe Type.of[Boolean]
+    union.asInstanceOf[UnionType].right shouldBe Type.of[String]
   }
 
   test("getType should convert type to equivalent java type properly") {
@@ -46,6 +58,8 @@ class TypeTests extends AnyFunSuite with Matchers:
     val wildcardUpperBound = Type.of[Option[? <: Number]].asInstanceOf[ParameterizedType].args.head.getType
     val wildcardLowerBound = Type.of[Option[? >: Serializable]].asInstanceOf[ParameterizedType].args.head.getType
     val wildcardUpperLowerBound = Type.of[Option[? >: Number <: Serializable]].asInstanceOf[ParameterizedType].args.head.getType
+    val intersection = Type.of[Boolean & String].getType
+    val union = Type.of[Boolean | String].getType
 
     simple shouldBe a[JType]
     simple shouldBe classOf[Boolean]
@@ -68,19 +82,27 @@ class TypeTests extends AnyFunSuite with Matchers:
     wildcardUpperLowerBound shouldBe a [JWildcardType]
     wildcardUpperLowerBound.asInstanceOf[JWildcardType].getUpperBounds shouldBe Seq(classOf[Serializable])
     wildcardUpperLowerBound.asInstanceOf[JWildcardType].getLowerBounds shouldBe Seq(classOf[Number])
+
+    intersection shouldBe classOf[Object]
+
+    union shouldBe classOf[Object]
   }
 
   test("getRawType should convert type to equivalent class type properly") {
     val simple = Type.of[Boolean].getRawType
     val param = Type.of[Map[Int, String]].getRawType
     val wildcard = Type.of[Option[?]].asInstanceOf[ParameterizedType].args.head.getRawType
+    val intersection = Type.of[Boolean & String].getRawType
+    val union = Type.of[Boolean | String].getRawType
 
     simple shouldBe classOf[Boolean]
     param shouldBe classOf[Map[?, ?]]
     wildcard shouldBe classOf[Object]
+    intersection shouldBe classOf[Object]
+    union shouldBe classOf[Object]
   }
 
-  test("of class should return TypeInfo from specified class") {
+  test("of class should return Type from specified class") {
     val clsType = Type.of(classOf[String])
 
     clsType should be (typeOf[String])

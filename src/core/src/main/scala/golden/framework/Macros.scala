@@ -1,7 +1,7 @@
 package golden.framework
 
 import quoted.*
-import golden.framework.{Type as FType, TypeImpl, ParameterizedTypeImpl, WildcardTypeImpl}
+import golden.framework.Type as FType
 
 private object Macros:
 
@@ -128,29 +128,25 @@ private object Macros:
   def typeToExpr(tpe: _TypeRepr)(using Quotes): Expr[FType] = {
     import quotes.reflect.*
 
-    val realType = tpe.asInstanceOf[TypeRepr].dealias.simplified
+    val realType = tpe.asInstanceOf[TypeRepr].dealias
     val symbol = realType.typeSymbol
     realType match {
       case AppliedType(_, rawArgs) =>
         val args = rawArgs.map(typeToExpr)
-        '{ new ParameterizedTypeImpl(
-          ${ Expr(symbol.fullName) },
-          ${ Expr(symbol.name) },
-          ${ Expr.ofSeq(args) })
-        }
+        '{ new ParameterizedTypeImpl(${ Expr(symbol.fullName) }, ${ Expr.ofSeq(args) }) }
       case TypeBounds(rawLow, rawHi) =>
         val low = typeToExpr(rawLow)
         val hi = typeToExpr(rawHi)
-        '{ new WildcardTypeImpl(
-          ${ Expr("?") },
-          ${ Expr("?") },
-          ${ low },
-          ${ hi })
-        }
+        '{ new WildcardTypeImpl(${ low }, ${ hi }) }
+      case AndType(rawLeft, rawRight) =>
+        val left = typeToExpr(rawLeft)
+        val right = typeToExpr(rawRight)
+        '{ new IntersectionTypeImpl(${ left }, ${ right }) }
+      case OrType(rawLeft, rawRight) =>
+        val left = typeToExpr(rawLeft)
+        val right = typeToExpr(rawRight)
+        '{ new UnionTypeImpl(${ left }, ${ right }) }
       case _ =>
-        '{ new TypeImpl(
-          ${ Expr(symbol.fullName) },
-          ${ Expr(symbol.name) })
-        }
+        '{ new TypeImpl(${ Expr(symbol.fullName) }) }
     }
   }
