@@ -2,8 +2,7 @@ package golden.framework.validation
 
 import golden.framework.{Predicate, fullNameOf}
 import golden.framework.validation.annotations.ValidationAnnotation
-import golden.framework.ReflectionUtils.getAnnotatedMembers
-import golden.framework.TypeUtils.isOptionType
+import golden.framework.ReflectionUtils.annotatedMembersOf
 
 trait Validator[T]:
 
@@ -33,10 +32,10 @@ trait Validator[T]:
 object Validator:
 
   inline def validate[T](annotatedObject: T): Unit = {
-    val properties = getAnnotatedMembers[T, ValidationAnnotation]
+    val properties = annotatedMembersOf[T, ValidationAnnotation]
     val validator = validatorFor[T] { validator =>
-      properties.foreach { case (name, (tpe, annotations)) =>
-        val propertyValidator = validator.the[Any](name, skipNone = tpe.isOptionType)
+      properties.foreach { (property, annotations) =>
+        val propertyValidator = validator.the[Any](property.name, skipNone = property.tpe.isOption)
         annotations.foreach { _.apply[Any, T](propertyValidator) }
       }
     }

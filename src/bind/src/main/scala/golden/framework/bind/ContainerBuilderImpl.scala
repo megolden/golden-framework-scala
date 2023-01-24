@@ -8,20 +8,8 @@ private class ContainerBuilderImpl extends ContainerBuilder:
 
   private val _registry = mutable.ArrayBuffer.empty[ServiceRegistrationBuilderImpl]
 
-  def registerType(tpe: Type): ServiceRegistrationBuilder = {
-    val builder = ServiceRegistrationBuilderImpl(tpe)
-    _registry += builder
-    builder
-  }
-
-  def registerInstance(instance: Any, tpe: Type): ServiceRegistrationBuilder = {
-    val builder = ServiceRegistrationBuilderImpl(tpe, Some(instance))
-    _registry += builder
-    builder
-  }
-
-  def register(provider: Container => Any, tpe: Type): ServiceRegistrationBuilder = {
-    val builder = ServiceRegistrationBuilderImpl(tpe, factory = Some(provider))
+  override def register(tpe: Type, provider: ServiceProvider): ServiceRegistrationBuilder = {
+    val builder = ServiceRegistrationBuilderImpl(tpe, provider)
     _registry += builder
     builder
   }
@@ -34,5 +22,5 @@ private class ContainerBuilderImpl extends ContainerBuilder:
     _registry.toSeq.map(_.build()) :+ containerService
   }
 
-  def build(tags: Any*): Container =
+  override def build(tags: Any*): Container =
     new ContainerImpl(buildServiceDescriptors(), tags*)

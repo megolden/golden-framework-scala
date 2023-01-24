@@ -1,57 +1,67 @@
 package golden.framework
 
-import java.lang.reflect.{Type as JType, ParameterizedType as JParameterizedType, WildcardType as JWildcardType}
+import java.lang.reflect.Modifier
+import java.lang.reflect.{ParameterizedType as JParameterizedType, Type as JType, WildcardType as JWildcardType}
 
 trait Type:
   val symbolName: String
+  val rawType: Class[?]
+  final def isAbstract: Boolean = Modifier.isAbstract(rawType.getModifiers)
+  final def isEnum: Boolean = classOf[scala.reflect.Enum].isAssignableFrom(rawType)
+  final def isOption: Boolean = classOf[Option[?]].isAssignableFrom(rawType)
   def name: String = symbolName
-  def simpleName: String = symbolName
-  protected def internalGetRawType: Class[?] = Class.forName(symbolName)
-  protected def internalGetType: JType = internalGetRawType
-  final def getType: JType =
-    getPrimitiveType.getOrElse(internalGetType)
-  final def getRawType: Class[?] =
-    getPrimitiveType.getOrElse(internalGetRawType)
-  override def toString: String = name
-  override def hashCode: Int = name.hashCode
-  override def equals(obj: Any): Boolean = obj match {
+  final def simpleName: String = rawType.getSimpleName
+  def getType: JType = rawType
+  final override def toString: String = name
+  final override def hashCode: Int = name.hashCode
+  final override def equals(obj: Any): Boolean = obj match {
     case that: Type => this.name == that.name
     case _ => false
-  }
-  private def getPrimitiveType: Option[Class[?]] = name match {
-    case "scala.Byte" => Some(classOf[Byte])
-    case "scala.Short" => Some(classOf[Short])
-    case "scala.Int" => Some(classOf[Int])
-    case "scala.Long" => Some(classOf[Long])
-    case "scala.Float" => Some(classOf[Float])
-    case "scala.Double" => Some(classOf[Double])
-    case "scala.Char" => Some(classOf[Char])
-    case "scala.Boolean" => Some(classOf[Boolean])
-    case "scala.Unit" => Some(classOf[Unit])
-    case "scala.Nothing" => Some(classOf[Nothing])
-    case "scala.Null" => Some(classOf[Null])
-    case "scala.Any" => Some(classOf[Any])
-    case "scala.AnyVal" => Some(classOf[AnyVal])
-    case "scala.AnyRef" => Some(classOf[AnyRef])
-    case _ => None
   }
 
 object Type:
 
-  inline def of[T]: Type =
-    Macros.getType[T]
+  trait Member:
+    val name: String
+    val tpe: Type
+    override def hashCode: Int = name.hashCode
+    override def equals(obj: Any): Boolean = obj match {
+      case that: Member => this.name == that.name
+      case _ => false
+    }
+    override def toString: String = s"$name: $tpe"
+  trait Field extends Member
+  trait Method extends Member:
+    override def toString: String = s"$name(): $tpe"
 
-  def of(tpe: JType): Type = tpe match {
-    case param: JParameterizedType =>
-      new ParameterizedTypeImpl(
-        param.getRawType.getTypeName,
-        param.getActualTypeArguments.map(of))
-    case wildcard: JWildcardType =>
-      new WildcardTypeImpl(
-        wildcard.getLowerBounds.headOption.map(of).getOrElse(Type.of[Nothing]),
-        wildcard.getUpperBounds.headOption.map(of).getOrElse(Type.of[Any]))
-    case _ =>
-      new TypeImpl(tpe.getTypeName)
+  def of(tpe: JType): Type = {
+    def getRawType(tpe: JType): Class[?] = tpe match {
+      case clazz: Class[?] => clazz
+      case other => Class.forName(other.getTypeName)
+    }
+
+    tpe match {
+      case param: JParameterizedType =>
+        new ParameterizedTypeImpl(
+          param.getRawType.getTypeName,
+          getRawType(param.getRawType),
+          param.getActualTypeArguments.map(of))
+      case wildcard: JWildcardType =>
+        new WildcardTypeImpl(
+          wildcard.getLowerBounds.headOption.map(of),
+          wildcard.getUpperBounds.headOption.map(of))
+      case other =>
+        new TypeImpl(other.getTypeName, getRawType(other))
+    }
   }
 
   def of(clazz: Class[?]): Type = of(clazz.asInstanceOf[JType])
+
+  import scala.quoted.*
+  import golden.framework.Type as FType
+
+  inline def of[T]: FType = ${ Macros.typeOf[T] }
+
+  private[framework] class FieldImpl(val name: String, val tpe: FType) extends Field
+
+  private[framework] class MethodImpl(val name: String, val tpe: FType) extends Method

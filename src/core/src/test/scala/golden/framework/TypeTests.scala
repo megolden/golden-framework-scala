@@ -1,10 +1,8 @@
 package golden.framework
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import golden.framework.TypeUtils.*
-import java.lang.reflect.{Type as JType, ParameterizedType as JParameterizedType, WildcardType as JWildcardType}
+import java.lang.reflect.{ParameterizedType as JParameterizedType, Type as JType, WildcardType as JWildcardType}
 
 class TypeTests extends AnyFunSuite with Matchers:
 
@@ -88,12 +86,12 @@ class TypeTests extends AnyFunSuite with Matchers:
     union shouldBe classOf[Object]
   }
 
-  test("getRawType should convert type to equivalent class type properly") {
-    val simple = Type.of[Boolean].getRawType
-    val param = Type.of[Map[Int, String]].getRawType
-    val wildcard = Type.of[Option[?]].asInstanceOf[ParameterizedType].args.head.getRawType
-    val intersection = Type.of[Boolean & String].getRawType
-    val union = Type.of[Boolean | String].getRawType
+  test("rawType should convert type to equivalent class type properly") {
+    val simple = Type.of[Boolean].rawType
+    val param = Type.of[Map[Int, String]].rawType
+    val wildcard = Type.of[Option[?]].asInstanceOf[ParameterizedType].args.head.rawType
+    val intersection = Type.of[Boolean & String].rawType
+    val union = Type.of[Boolean | String].rawType
 
     simple shouldBe classOf[Boolean]
     param shouldBe classOf[Map[?, ?]]
@@ -105,7 +103,7 @@ class TypeTests extends AnyFunSuite with Matchers:
   test("of class should return Type from specified class") {
     val clsType = Type.of(classOf[String])
 
-    clsType should be (typeOf[String])
+    clsType should be (typeOf[java.lang.String])
   }
 
   test("of class should ignore type arguments") {
@@ -127,8 +125,8 @@ class TypeTests extends AnyFunSuite with Matchers:
     val optionType = typeOf[Option[?]]
     val nonOptionType = typeOf[String]
 
-    optionType.isOptionType shouldBe true
-    nonOptionType.isOptionType shouldBe false
+    optionType.isOption shouldBe true
+    nonOptionType.isOption shouldBe false
   }
 
   test("isAbstract should return true when abstract type passed") {

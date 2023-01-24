@@ -1,3 +1,6 @@
 package golden.framework.domain
 
-class unique extends scala.annotation.StaticAnnotation
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
+
+@compileTimeOnly("`unique` is compile time only annotation")
+class unique extends StaticAnnotation

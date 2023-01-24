@@ -1,31 +1,30 @@
 package golden.framework.bind
 
-import golden.framework.{Type, typeOf, ParameterizedType}
+import golden.framework.{Type, ParameterizedType}
 import scala.collection.mutable
 import java.io.Closeable
 import ServiceLifetime.*
 
 private class ContainerImpl private(
   registry: Seq[ServiceDescriptor],
-  singletonInstances: mutable.Map[ServiceDescriptor, Any],
-  val isRoot: Boolean,
   val tags: Set[Any],
-  rootContainer: Option[Container])
+  rootContainer: Option[ContainerImpl])
   extends Container:
 
+  private val _instances = mutable.LinkedHashMap.empty[ServiceDescriptor, Any]
+
   def this(registry: Seq[ServiceDescriptor], tags: Any*) =
-    this(registry, mutable.Map.empty, isRoot = true, Set("root") ++ tags, rootContainer = None)
+    this(registry, Set("root") ++ tags, rootContainer = None)
 
-  private val _scopedInstances = mutable.HashMap.empty[ServiceDescriptor, Any]
-  private val _closeableInstances = mutable.ArrayBuffer.empty[Closeable]
+  override val isRoot: Boolean = rootContainer.isEmpty
 
-  override val root: Container = rootContainer.getOrElse(this)
+  override val root: ContainerImpl = rootContainer.getOrElse(this)
 
   override def get(serviceType: Type): Any = serviceType match {
     case tpe if isLazyResolution(tpe) =>
       resolveLazy(tpe.asInstanceOf[ParameterizedType].args.head)
     case tpe if isCollectionResolution(tpe) =>
-      resolveCollection(tpe.asInstanceOf[ParameterizedType].args.head)
+      resolveAll(tpe.asInstanceOf[ParameterizedType].args.head)
     case tpe if isOptionResolution(tpe) =>
       resolveOption(tpe.asInstanceOf[ParameterizedType].args.head)
     case _ =>
@@ -36,7 +35,7 @@ private class ContainerImpl private(
     registry.filter(_.serviceTypes.contains(tpe))
 
   private def isLazyResolution(tpe: Type): Boolean =
-    tpe.symbolName == typeOf[Lazy[?]].symbolName
+    tpe.rawType == classOf[Lazy[?]]
 
   private def resolveLazy(serviceType: Type): Any = {
     val container = this
@@ -46,44 +45,39 @@ private class ContainerImpl private(
   }
 
   private def isOptionResolution(tpe: Type): Boolean =
-    tpe.symbolName == typeOf[Option[?]].symbolName
+    tpe.rawType == classOf[Option[?]]
 
   private def resolveOption(serviceType: Type): Option[?] =
-    findMatchServices(serviceType).lastOption.map(get)
+    findMatchServices(serviceType).lastOption.map(getInstance)
 
   private def resolveLast(serviceType: Type): Any =
-    findMatchServices(serviceType).lastOption.map(get).getOrElse {
+    findMatchServices(serviceType).lastOption.map(getInstance).getOrElse {
       throw ServiceResolutionException(serviceType)
     }
 
   private def isCollectionResolution(tpe: Type): Boolean =
-    tpe.symbolName == typeOf[Iterable[?]].symbolName
+    tpe.rawType == classOf[List[?]]
 
-  private def resolveCollection(serviceType: Type): Seq[Any] =
-    findMatchServices(serviceType).map(get)
+  private def resolveAll(serviceType: Type): List[Any] =
+    findMatchServices(serviceType).map(getInstance).toList
 
-  private def get(descriptor: ServiceDescriptor): Any = {
-    val instance = descriptor.lifetime match {
-      case Singleton => singletonInstances.getOrElseUpdate(descriptor, descriptor.provider.get(this))
-      case Scope => _scopedInstances.getOrElseUpdate(descriptor, descriptor.provider.get(this))
-      case _ => descriptor.provider.get(this)
-    }
-    addToCloseables(instance, descriptor)
-    instance
+  private def getInstance(descriptor: ServiceDescriptor): Any = descriptor.lifetime match {
+    case Singleton => root._instances.getOrElseUpdate(descriptor, descriptor.provider.get(this))
+    case Scope => _instances.getOrElseUpdate(descriptor, descriptor.provider.get(this))
+    case Transient => _instances.getOrElseUpdate(descriptor.clone(), descriptor.provider.get(this))
   }
 
-  private def addToCloseables(instance: Any, descriptor: ServiceDescriptor): Unit = {
-    if (instance != this && !descriptor.externallyOwned && instance.isInstanceOf[Closeable]) {
-      if (descriptor.lifetime != Singleton || isRoot)
-        _closeableInstances += instance.asInstanceOf[Closeable]
-    }
-  }
-
-  override def createScope(additionalSetup: ContainerBuilder => ?, tags: Any*): Container =
+  override def createScope(additionalSetup: ContainerBuilder => ?, tags: Any*): Container = {
     val builder = new ContainerBuilderImpl
     additionalSetup(builder)
     val additionalDescriptors = builder.buildServiceDescriptors()
-    new ContainerImpl(registry ++ additionalDescriptors, singletonInstances, isRoot = false, tags.toSet, Some(root))
+    new ContainerImpl(registry ++ additionalDescriptors, tags.toSet, Some(root))
+  }
 
-  override def close(): Unit =
-    _closeableInstances.toSeq.foreach(_.close())
+  override def close(): Unit = {
+    _instances.collect { case (descriptor, instance: Closeable)
+      if !descriptor.externallyOwned && !instance.isInstanceOf[Container] => instance
+    } .toSeq foreach {
+      _.close()
+    }
+  }

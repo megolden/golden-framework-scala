@@ -5,148 +5,198 @@ import golden.framework.Type as FType
 
 private object Macros:
 
-  private type _Symbol = Any
-  private type _TypeRepr = Any
-  private type _Term = Any
+  def typeOf[T](using tpe: Type[T], quotes: Quotes): Expr[FType] =
+    new Macros(using quotes).typeOf(tpe)
 
-  inline def getType[T]: FType = ${ getTypeImpl[T] }
-  private def getTypeImpl[T: Type](using Quotes): Expr[FType] =
-    typeToExpr(quotes.reflect.TypeRepr.of[T])
+  def fullNameOf(expr: Expr[?])(using quotes: Quotes): Expr[String] =
+    new Macros(using quotes).fullNameOf(expr)
 
-  inline def getFullNameOf[A](inline expr: A): String = ${ getFullNameOfImpl[A]('{expr}) }
-  private def getFullNameOfImpl[A](expr: Expr[A])(using Quotes): Expr[String] = {
-    import quotes.reflect.*
+  def nameOf(expr: Expr[?])(using quotes: Quotes): Expr[String] =
+    new Macros(using quotes).nameOf(expr)
 
-    def resolveTermName(term: Term): Option[String] = term match {
-      case Apply(term, args) =>
-        Some((resolveTermName(term) ++ args.map(resolveTermName).flatten).mkString(".")).filter(_.nonEmpty)
-      case Select(term, name) =>
-        Some((resolveTermName(term) ++ Some(name)).mkString(".")).filter(_.nonEmpty)
-      case Block(List(DefDef(_, _, _, Some(term))), _) => resolveTermName(term)
-      case Inlined(_, _, term) => resolveTermName(term)
-      case _: Typed => None
-      case Ident(underscore) if underscore.matches("""^_\$\d+$""") => None
-      case Ident(augment) if augment == "augmentString" => None
-      case Ident(name) => Some(name)
-    }
-    val name = resolveTermName(expr.asTerm).getOrElse("")
-    Expr(name)
+  def annotationsOf[T, A](using tpe: Type[T], annType: Type[A], quotes: Quotes): Expr[Seq[A]] =
+    '{ ${new Macros(using quotes).annotationsOf(tpe, annType)}.map(_.asInstanceOf[A]) }
+
+  def annotatedTypesOf[T, A](using tpe: Type[T], annType: Type[A], quotes: Quotes): Expr[Map[FType, Seq[A]]] = '{
+    ${ new Macros(using quotes).annotatedTypesOf(tpe, annType) }
+      .map((t, as) => t -> as.map(_.asInstanceOf[A]))
+      .toMap
   }
 
-  trait Default[T] { var value: T }
-  inline def getDefault[A]: A = ${ getDefaultImpl[A] }
-  private def getDefaultImpl[A: Type](using Quotes): Expr[A] = {
-      import quotes.reflect.*
-
-      '{ new Default[A] { var value: A = _ }.value }
-    }
-
-  inline def getAnnotations[T, A]: Iterable[A] = ${ getAnnotationsImpl[T, A] }
-  private def getAnnotationsImpl[T: Type, A: Type](using Quotes): Expr[Iterable[A]] = {
-    import quotes.reflect.*
-
-    val annotations =
-      TypeRepr.of[T].typeSymbol.annotations
-        .filter(_.tpe <:< TypeRepr.of[A])
-        .map(_.asExprOf[A])
-
-    Expr.ofSeq(annotations)
+  def annotatedMembersOf[T, A](using tpe: Type[T], annType: Type[A], quotes: Quotes): Expr[Map[FType.Member, Seq[A]]] = '{
+    ${ new Macros(using quotes).annotatedMembersOf(tpe, annType) }
+      .map((t, as) => t -> as.map(_.asInstanceOf[A]))
+      .toMap
   }
 
-  inline def getAnnotatedMembers[T, A]: Iterable[(String, FType, Iterable[A])] = ${ getAnnotatedMembersImpl[T, A] }
-  private def getAnnotatedMembersImpl[T: Type, A: Type](using Quotes): Expr[Iterable[(String, FType, Iterable[A])]] = {
-    import quotes.reflect.*
+private class Macros(using quotes: Quotes):
+  import quotes.*
+  import quotes.reflect.*
 
-    val typeSymbol = TypeRepr.of[T].typeSymbol
-    val annotationType = TypeRepr.of[A]
-
-    def getAnnotations(symbol: Symbol): Seq[Term] = {
-      val ctorParams = typeSymbol.primaryConstructor.paramSymss.headOption.toSeq.flatten
-      (symbol.annotations ++ ctorParams.filter(_.name == symbol.name).flatMap(_.annotations))
-        .filter(_.tpe <:< annotationType)
-    }
-
-    def getMemberType(member: Symbol): TypeRepr = {
-      member.tree match
-        case ValDef(_, t, _) => t.tpe
-        case DefDef(_, _, t, _) => t.tpe
-    }
-
-    def toExpr(member: Symbol, annotations: Seq[Term]): Expr[(String, FType, Iterable[A])] = {
-      val name = member.name
-      val memberAnnotations = annotations.map(_.asExprOf[A])
-      val tpe = getMemberType(member)
-      '{(${Expr(name)}, ${typeToExpr(tpe)}, ${Expr.ofSeq(memberAnnotations)})}
-    }
-
-    val members = typeSymbol.declarations.map(member => (member, getAnnotations(member)))
-      .collect { case (member, annotations) if annotations.nonEmpty => toExpr(member, annotations) }
-
-    Expr.ofSeq(members)
-  }
-
-  inline def getAllAnnotations[T]: Iterable[?] = ${ getAllAnnotationsImpl[T] }
-  private def getAllAnnotationsImpl[T: Type](using Quotes): Expr[Iterable[?]] = {
-    import quotes.reflect.*
-
-    val annotations =
-      TypeRepr.of[T].typeSymbol.annotations
-        .filterNot(_.tpe.typeSymbol == TypeRepr.of[scala.annotation.internal.SourceFile].typeSymbol)
-        .map(_.asExpr)
-
-    Expr.ofSeq(annotations)
-  }
-
-  inline def getAnnotatedPackageTypes[T, A]: Iterable[(FType, Iterable[A])] =
-    ${ getAnnotatedPackageTypesImpl[T, A] }
-  private def getAnnotatedPackageTypesImpl[T: Type, A: Type](using Quotes): Expr[Iterable[(FType, Iterable[A])]] = {
-    import quotes.reflect.*
-
-    def toExpr(tpe: TypeRepr, annotations: Seq[Term]): Expr[(FType, Iterable[A])] = {
-      '{(${typeToExpr(tpe)}, ${Expr.ofSeq(annotations.map(_.asExprOf[A]))})}
-    }
-
-    Expr.ofSeq(
-      getAnnotatedPackageTypes(TypeRepr.of[T].typeSymbol.maybeOwner, TypeRepr.of[A])
-      .map((tpe, terms) => toExpr(tpe.asInstanceOf[TypeRepr], terms.map(_.asInstanceOf[Term]))))
-  }
-
-  def getAnnotatedPackageTypes(packageSymbol: _Symbol, annotationType: _TypeRepr)(using Quotes): Seq[(_TypeRepr, Seq[_Term])] = {
-    import quotes.reflect.*
-
-    val pkg = packageSymbol.asInstanceOf[Symbol]
-    val annType = annotationType.asInstanceOf[TypeRepr]
-    if pkg.isNoSymbol then return Nil
-    pkg.declaredTypes.flatMap {
-      case pkg if pkg.isPackageDef => getAnnotatedPackageTypes(pkg, annotationType)
-      case tpe if tpe.hasAnnotation(annType.typeSymbol) =>
-        Some((tpe.typeRef, tpe.annotations.filter(_.tpe <:< annType)))
-      case _ => Nil
+  def typeOf(tpe: Type[?]): Expr[FType] = {
+    TypeRepr.of(using tpe) match {
+      case AppliedType(base, args) if args.nonEmpty =>
+        val symbolName = Expr(base.typeSymbol.fullName)
+        val clazz = clazzOf(base)
+        val argExprs = Expr.ofSeq(args.map(t => typeOf(t.asType)))
+        '{ new ParameterizedTypeImpl(${ symbolName }, ${ clazz }, ${ argExprs }) }
+      case TypeBounds(low, hi) =>
+        val l = typeOf(low.asType)
+        val h = typeOf(hi.asType)
+        '{ new WildcardTypeImpl(${ l }, ${ h }) }
+      case AndType(left, right) =>
+        val l = typeOf(left.asType)
+        val r = typeOf(right.asType)
+        '{ new IntersectionTypeImpl(${ l }, ${ r }) }
+      case OrType(left, right) =>
+        val l = typeOf(left.asType)
+        val r = typeOf(right.asType)
+        '{ new UnionTypeImpl(${ l }, ${ r }) }
+      case other =>
+        val symbolName = Expr(other.typeSymbol.fullName)
+        val clazz = clazzOf(other)
+        '{ new TypeImpl(${ symbolName }, ${ clazz }) }
     }
   }
 
-  def typeToExpr(tpe: _TypeRepr)(using Quotes): Expr[FType] = {
-    import quotes.reflect.*
+  def annotationsOf(tpe: Type[?], annotationType: Type[?]): Expr[Seq[Any]] = {
+    val typeSymbol = TypeRepr.of(using tpe).typeSymbol
+    Expr.ofSeq(getAnnotationsOf(typeSymbol, annotationType).map(_.asExprOf[Any]))
+  }
 
-    val realType = tpe.asInstanceOf[TypeRepr].dealias
-    val symbol = realType.typeSymbol
-    realType match {
-      case AppliedType(_, rawArgs) =>
-        val args = rawArgs.map(typeToExpr)
-        '{ new ParameterizedTypeImpl(${ Expr(symbol.fullName) }, ${ Expr.ofSeq(args) }) }
-      case TypeBounds(rawLow, rawHi) =>
-        val low = typeToExpr(rawLow)
-        val hi = typeToExpr(rawHi)
-        '{ new WildcardTypeImpl(${ low }, ${ hi }) }
-      case AndType(rawLeft, rawRight) =>
-        val left = typeToExpr(rawLeft)
-        val right = typeToExpr(rawRight)
-        '{ new IntersectionTypeImpl(${ left }, ${ right }) }
-      case OrType(rawLeft, rawRight) =>
-        val left = typeToExpr(rawLeft)
-        val right = typeToExpr(rawRight)
-        '{ new UnionTypeImpl(${ left }, ${ right }) }
-      case _ =>
-        '{ new TypeImpl(${ Expr(symbol.fullName) }) }
+  def annotatedTypesOf(rootType: Type[?], annotationType: Type[?]): Expr[Map[FType, Seq[Any]]] = {
+    val rootTypeSymbol = TypeRepr.of(using rootType).typeSymbol
+    val rootPackageSymbol = rootTypeSymbol.owner
+
+    if !rootPackageSymbol.isPackageDef then
+      sys.error(s"type is not a package root type: ${rootTypeSymbol.fullName}")
+
+    val types = Expr.ofSeq(
+      getAnnotatedTypesOf(rootPackageSymbol, annotationType).map { tpe =>
+        '{ ${typeOf(tpe)} -> ${annotationsOf(tpe, annotationType)} }
+      })
+
+    '{ ${types}.toMap }
+  }
+
+  def annotatedMembersOf(tpe: Type[?], annotationType: Type[?]): Expr[Map[FType.Member, Seq[Any]]] = {
+    val typeSymbol = TypeRepr.of(using tpe).typeSymbol
+    val annTypeSymbol = TypeRepr.of(using annotationType).typeSymbol
+    val members = getMembers(typeSymbol).filter(memberHasAnnotation(_, annTypeSymbol))
+
+    def toMemberExpr(symbol: Symbol): Expr[FType.Member] = {
+      val name = Expr(symbol.name)
+      val tpe =
+        if symbol.isDefDef then typeOf(symbol.tree.asInstanceOf[DefDef].returnTpt.tpe.asType)
+        else typeOf(symbol.tree.asInstanceOf[ValDef].tpt.tpe.asType)
+      if symbol.isDefDef then '{ new FType.MethodImpl(${name}, ${tpe}) }
+      else '{ new FType.FieldImpl(${name}, ${tpe}) }
+    }
+
+    val memberExprs = Expr.ofSeq(
+      members.map { symbol =>
+        '{ ${toMemberExpr(symbol)} -> ${ Expr.ofSeq(getMemberAnnotationsOf(symbol, annotationType).map(_.asExprOf[Any])) } }
+      })
+
+    '{ ${ memberExprs }.toMap }
+  }
+
+  private def clazzOf(tpe: TypeRepr): Expr[Class[?]] = {
+    Literal(ClassOfConstant(tpe)).asExprOf[Class[?]]
+  }
+
+  private def fullNameOf(expr: Expr[?]): Expr[String] = {
+    val fullName = resolveFullNameOf(expr.asTerm).getOrElse {
+      throw UnsupportedOperationException(s"name of: ${expr.show}")
+    }
+    Expr(fullName)
+  }
+
+  private def nameOf(expr: Expr[?]): Expr[String] = {
+    val fullName = resolveFullNameOf(expr.asTerm).getOrElse {
+      throw UnsupportedOperationException(s"name of: ${expr.show}")
+    }
+    Expr(fullName.split('.').last)
+  }
+
+  private def resolveFullNameOf(term: Term): Option[String] = term match {
+    case Ident(name) if name.matches("""^\_\$\d+$""") => None
+    case _: Typed => None
+    case Apply(term, args) =>
+      val termName = term match
+        case ident: Ident if ident.symbol == Symbol.requiredMethod("scala.Predef.augmentString") => None
+        case _ => resolveFullNameOf(term)
+      Some((termName ++ args.flatMap(resolveFullNameOf)).mkString(".")).filter(_.nonEmpty)
+    case Select(term, name) =>
+      Some((resolveFullNameOf(term) ++ Some(name)).mkString(".")).filter(_.nonEmpty)
+    case Block(List(DefDef(_, _, _, Some(term))), _) => resolveFullNameOf(term)
+    case Inlined(_, _, term) => resolveFullNameOf(term)
+    case Ident(name) => Some(name)
+  }
+
+  private def getAnnotatedTypesOf(pack: Symbol, annotationType: Type[?]): Seq[Type[?]] = {
+    val annType = TypeRepr.of(using annotationType)
+    pack.declaredTypes.flatMap {
+      case pkg if pkg.isPackageDef => getAnnotatedTypesOf(pkg, annotationType)
+      case tpe if tpe.hasAnnotation(annType.typeSymbol) => Some(tpe.typeRef.asType)
+      case _ => None
     }
   }
+
+  private def getMembers(symbol: Symbol): Seq[Symbol] = {
+
+    def isObjectOwner(member: Symbol): Boolean = {
+      val owner = member.owner
+      owner.fullName == "java.lang.Object" || owner.fullName == "scala.Any"
+    }
+
+    def isValidMember(member: Symbol): Boolean = {
+      !isObjectOwner(member) &&
+      !member.isClassConstructor &&
+      !member.flags.is(Flags.Artifact) &&
+      !member.flags.is(Flags.Synthetic) &&
+      !member.flags.is(Flags.Macro) &&
+      !member.flags.is(Flags.Implicit)
+    }
+
+    symbol.fieldMembers.filter(isValidMember)
+    ++
+    symbol.methodMembers.filter(isValidMember)
+  }
+
+  private def getAnnotationsOf(symbol: Symbol, annotationType: Type[?]): Seq[Term] = {
+    val annType = TypeRepr.of(using annotationType)
+    symbol.annotations
+      .filterNot(_.tpe.typeSymbol == TypeRepr.of[scala.annotation.internal.SourceFile].typeSymbol)
+      .filter(_.tpe <:< annType)
+  }
+
+  private def getMemberAnnotationsOf(member: Symbol, annotationType: Type[?]): Seq[Term] = {
+    getAnnotationsOf(member, annotationType) ++
+      Seq(member.owner.primaryConstructor)
+        .filterNot(_.isNoSymbol)
+        .flatMap(_.paramSymss.flatten)
+        .filter(_.name == member.name)
+        .flatMap(getAnnotationsOf(_, annotationType))
+  }
+
+  private def memberHasAnnotation(member: Symbol, annotationTypeSymbol: Symbol): Boolean = {
+    if member.hasAnnotation(annotationTypeSymbol) then true
+    else
+      Seq(member.owner.primaryConstructor)
+        .filterNot(_.isNoSymbol)
+        .flatMap(_.paramSymss.flatten)
+        .filter(_.name == member.name)
+        .exists(_.hasAnnotation(annotationTypeSymbol))
+  }
+
+  // exposed methods
+
+  type SYMBOL = Any
+  type TERM = Any
+
+  def findAnnotatedTypesOf(packageSymbol: SYMBOL, annotationType: Type[?]): Seq[Type[?]] =
+    getAnnotatedTypesOf(packageSymbol.asInstanceOf[Symbol], annotationType)
+
+  def findAnnotationsOfType(typeSymbol: SYMBOL, annotationType: Type[?]): Seq[TERM] =
+    getAnnotationsOf(typeSymbol.asInstanceOf[Symbol], annotationType)

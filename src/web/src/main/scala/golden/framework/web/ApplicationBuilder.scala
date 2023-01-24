@@ -1,7 +1,7 @@
 package golden.framework.web
 
 import golden.framework.bind.Module
-import golden.framework.{Macros, Type, typeOf}
+import golden.framework.{ReflectionUtils, Type, typeOf}
 
 trait ApplicationBuilder:
 
@@ -15,7 +15,7 @@ trait ApplicationBuilder:
 
   final inline def addHandler[THandler <: RequestHandler](): ApplicationBuilder = {
     val handlerType = typeOf[THandler]
-    val methods = Macros.getAnnotations[THandler, HttpMethodAnnotation].toSeq
+    val methods = ReflectionUtils.annotationsOf[THandler, HttpMethodAnnotation]
     addHandlerType(handlerType, methods)
   }
 

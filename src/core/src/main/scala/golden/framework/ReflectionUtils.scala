@@ -1,15 +1,17 @@
 package golden.framework
 
 object ReflectionUtils:
+  import scala.quoted.*
+  import golden.framework.Type as FType
 
-  inline def getAnnotations[T, A]: Iterable[A] =
-    Macros.getAnnotations[T, A]
+  inline def annotationsOf[T, A]: Seq[A] =
+    ${ Macros.annotationsOf[T, A] }
 
-  inline def getAnnotations[T]: Iterable[?] =
-    Macros.getAllAnnotations[T]
+  inline def annotationsOf[T]: Seq[Any] =
+    ${ Macros.annotationsOf[T, Any] }
 
-  inline def getAnnotatedMembers[T, A]: Map[String, (Type, Iterable[A])] =
-    Macros.getAnnotatedMembers[T, A].map { case (name, tpe, annotations) => name -> (tpe, annotations) }.toMap
+  inline def annotatedTypesOf[P, A]: Map[FType, Seq[A]] =
+    ${ Macros.annotatedTypesOf[P, A] }
 
-  inline def getPackageAnnotatedTypes[TPackageRoot, A]: Map[Type, Iterable[A]] =
-    Macros.getAnnotatedPackageTypes[TPackageRoot, A].toMap
+  inline def annotatedMembersOf[T, A]: Map[FType.Member, Seq[A]] =
+    ${ Macros.annotatedMembersOf[T, A] }

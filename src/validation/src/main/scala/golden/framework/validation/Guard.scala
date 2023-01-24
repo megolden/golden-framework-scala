@@ -1,6 +1,7 @@
 package golden.framework.validation
 
-import golden.framework.{nonNullOrNone, unwrapOption, default, nonNull}
+import golden.framework.default
+import golden.framework.CommonExtensions.{nonNullOrNone, nonNull, unwrapOption}
 import golden.framework.StringUtils.nonBlank
 import java.util.Objects.equals as equalObjects
 

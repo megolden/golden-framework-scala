@@ -1,7 +1,8 @@
 package golden.framework.validation.rules
 
 import golden.framework.validation.{ValidationRule, Validator}
-import golden.framework.{nonNullOrNone, Predicate}
+import golden.framework.Predicate
+import golden.framework.CommonExtensions.nonNullOrNone
 
 private class CommonValidatorImpl[T](validator: Validator[T], negate: Boolean = false)
   extends CommonValidator[T]:

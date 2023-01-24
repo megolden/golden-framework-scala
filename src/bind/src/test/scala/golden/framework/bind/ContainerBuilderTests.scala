@@ -3,6 +3,7 @@ package golden.framework.bind
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import golden.framework.typeOf
+import golden.framework.bind.ContainerBuilderExtensions.*
 
 class ContainerBuilderTests extends AnyFunSuite with Matchers:
 
@@ -76,6 +77,18 @@ class ContainerBuilderTests extends AnyFunSuite with Matchers:
     noException should be thrownBy {
       container.get[Int]
     }
+  }
+
+  test("registerPackageServices should register package annotated services") {
+    val container = aContainerWith {
+      _.registerPackageServices[golden.framework.bind.SomeService]()
+    }
+
+    val iterable = container.get[Ordered[Int]]
+    val instance = container.get[SomeAnnotatedService]
+
+    iterable shouldBe a [SomeAnnotatedService]
+    instance shouldBe a [SomeAnnotatedService]
   }
 
   private def aContainerWith(setup: ContainerBuilder => ?): Container = {

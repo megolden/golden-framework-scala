@@ -12,11 +12,12 @@ import java.util.{Date, GregorianCalendar}
 import PersianCalendar.{dateSeparator, isLeapYear}
 import java.time.format.DateTimeParseException
 import scala.util.matching.Regex.quote
+import golden.framework.time.CalendarUtils.*
 
 final class PersianDate private(private val calendar: Calendar) extends Ordered[PersianDate] with Serializable:
 
   val year: Int = calendar.get(Calendar.YEAR)
-  val month: PersianMonth = PersianMonth.fromValue(calendar.get(Calendar.MONTH) + 1)
+  val month: PersianMonth = PersianMonth.fromOrdinal(calendar.get(Calendar.MONTH))
   val dayOfMonth: Int = calendar.get(Calendar.DAY_OF_MONTH)
   val dayOfYear: Int = calendar.get(Calendar.DAY_OF_YEAR)
   val dayOfWeek: DayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) match {

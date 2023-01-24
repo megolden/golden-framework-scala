@@ -2,10 +2,10 @@ package golden.framework
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-import golden.framework.*
+import golden.framework.CommonExtensions.*
 import golden.framework.StringUtils.Empty
 
-class ExtensionsTests extends AnyFunSuite with Matchers:
+class CommonExtensionsTests extends AnyFunSuite with Matchers:
 
   test("nameOf should return name of field or method") {
     inline def getNameOfLambda[T](inline p: T => ?): String = nameOf(p)
@@ -23,7 +23,6 @@ class ExtensionsTests extends AnyFunSuite with Matchers:
     def getParamName(param: String): String = fullNameOf(param)
     object Obj { def func: String = "" }
     inline def getFullNameOfLambda[T](inline p: T => ?): String = fullNameOf(p)
-    val augmentString = "some"
 
     fullNameOf(firstName) should be ("firstName")
     fullNameOf(firstName) should be ("firstName")
@@ -36,19 +35,21 @@ class ExtensionsTests extends AnyFunSuite with Matchers:
     getFullNameOfLambda[String](_.trim.length) should be ("trim.length")
     getFullNameOfLambda[String](_.trim.length.toString) should be ("trim.length.toString")
     getFullNameOfLambda[String](_.trim.length.toString.lengthIs) should be ("trim.length.toString.lengthIs")
+    getFullNameOfLambda[String](_.lengthIs) should be ("lengthIs")
     getFullNameOfLambda[String](_.trim.length.toString.lengthIs.toLong) should be ("trim.length.toString.lengthIs.toLong")
-    fullNameOf(augmentString) shouldBe empty
   }
 
   test("default should return default value of specified type") {
-    default[Long] shouldBe 0L
+    default[Byte] shouldBe (0:Byte)
+    default[Short] shouldBe (0:Short)
     default[Int] shouldBe 0
+    default[Long] shouldBe 0L
+    default[Float] shouldBe 0F
+    default[Double] shouldBe 0D
     default[Boolean] shouldBe false
+    default[Char] shouldBe '\u0000'
+    default[Unit] shouldBe ()
     default[String] shouldBe null
-  }
-
-  test("nullAs should return null value of specified type") {
-    nullAs[String] shouldBe null
   }
 
   test("emptyString should be empty string value") {

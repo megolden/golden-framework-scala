@@ -1,3 +1,5 @@
 package golden.framework.application
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
 
-class transactional extends scala.annotation.StaticAnnotation
+@compileTimeOnly("`transactional` is compile time only annotation")
+class transactional extends StaticAnnotation

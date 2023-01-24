@@ -11,12 +11,8 @@ trait ServiceRegistrationBuilder:
 
   def asSelf(): ServiceRegistrationBuilder
 
-  def usingConstructor(params: Type*): ServiceRegistrationBuilder
-
   def asSingleton(): ServiceRegistrationBuilder
 
   def asContainerScoped(): ServiceRegistrationBuilder
-
-  def withLifetime(lifetime: ServiceLifetime): ServiceRegistrationBuilder
 
   def externallyOwned(): ServiceRegistrationBuilder

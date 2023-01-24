@@ -2,8 +2,10 @@ package golden.framework.validation.annotations
 
 import golden.framework.validation.{PropertyValidationRule, PropertyValidator}
 import golden.framework.OptionExtensions.tap
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
 
-trait ValidationAnnotation extends scala.annotation.StaticAnnotation:
+@compileTimeOnly("`ValidationAnnotation` is compile time only annotation")
+trait ValidationAnnotation extends StaticAnnotation:
 
   val message: Option[String] = None
 

@@ -1,31 +1,42 @@
 package golden.framework.bind
 
 import golden.framework.{Type, typeOf, ReflectionUtils}
-import ServiceLifetime.*
 
 trait ContainerBuilder:
 
-  def registerType(tpe: Type): ServiceRegistrationBuilder
+  private[bind] def register(tpe: Type, provider: ServiceProvider): ServiceRegistrationBuilder
 
-  final inline def registerType[T]: ServiceRegistrationBuilder = {
-    val ctorParams = Macros.findInjectableCtorParams[T]
-    registerType(typeOf[T]).usingConstructor(ctorParams*)
+  final def registerType(tpe: Type): ServiceRegistrationBuilder = {
+    val provider = TypeServiceProvider(tpe)
+    register(tpe, provider)
   }
 
-  private[bind] def registerInstance(instance: Any, tpe: Type): ServiceRegistrationBuilder
 
-  final inline def registerInstance[T](instance: T): ServiceRegistrationBuilder =
-    registerInstance(instance, typeOf[T])
+  final inline def registerType[T]: ServiceRegistrationBuilder = {
+    val tpe = typeOf[T]
+    val constructor = Macros.findConstructorOf[T]
+    val provider = TypeServiceProvider(tpe, constructor)
+    register(tpe, provider)
+  }
 
-  private[bind] def register(provider: Container => Any, tpe: Type): ServiceRegistrationBuilder
+  final inline def registerInstance[T](instance: T): ServiceRegistrationBuilder = {
+    val tpe = typeOf[T]
+    val provider = InstanceServiceProvider(tpe, instance)
+    register(tpe, provider)
+  }
 
-  final inline def register[T](provider: Container => T): ServiceRegistrationBuilder =
-    register(provider.apply(_), typeOf[T])
+  final inline def register[T](factory: Container => T): ServiceRegistrationBuilder = {
+    val tpe = typeOf[T]
+    val provider = FactoryServiceProvider(tpe, factory.apply(_))
+    register(tpe, provider)
+  }
 
   final inline def registerService[T](): ServiceRegistrationBuilder = {
     val tpe = typeOf[T]
-    val serviceAnnotations = ReflectionUtils.getAnnotations[T, service]
-    registerService(tpe, serviceAnnotations)
+    val constructor = Macros.findConstructorOf[T]
+    val provider = TypeServiceProvider(tpe, constructor)
+    val services = ReflectionUtils.annotationsOf[T, service]
+    registerService(tpe, provider, services)
   }
 
   final def registerModule(module: Module): ContainerBuilder = {
@@ -35,21 +46,22 @@ trait ContainerBuilder:
 
   def build(tags: Any*): Container
 
-  private[bind] def registerService(tpe: Type, serviceAnnotations: Iterable[service]): ServiceRegistrationBuilder = {
-    if (serviceAnnotations.isEmpty)
+  private[bind] def registerService(
+    tpe: Type,
+    provider: ServiceProvider,
+    services: Iterable[service]
+  ): ServiceRegistrationBuilder = {
+
+    if (services.isEmpty)
       throw ServiceRegistrationException(s"type not annotated as service: $tpe")
 
-    var builder = registerType(tpe)
-    serviceAnnotations.foreach { service =>
-      if service.as.isEmpty then builder = builder.asSelf()
-      else builder = builder.as(service.as.get)
-
-      builder = service.lifetime match
-        case Singleton => builder.asSingleton()
-        case Scope => builder.asContainerScoped()
-        case _ => builder
+    var builder = register(tpe, provider)
+    services.foreach { service =>
+      if service.as.nonEmpty then builder = builder.as(service.as.get)
+      else builder = builder.asSelf()
+      if service.asSingleton then builder = builder.asSingleton()
+      else if service.asContainerScoped then builder = builder.asContainerScoped()
     }
-
     builder
   }
 

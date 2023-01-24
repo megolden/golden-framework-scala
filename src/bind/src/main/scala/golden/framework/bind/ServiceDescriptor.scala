@@ -7,3 +7,7 @@ private class ServiceDescriptor(
   val provider: ServiceProvider,
   val lifetime: ServiceLifetime,
   val externallyOwned: Boolean = false)
+  extends Cloneable:
+
+  override def clone(): ServiceDescriptor =
+    new ServiceDescriptor(serviceTypes, provider, lifetime, externallyOwned)

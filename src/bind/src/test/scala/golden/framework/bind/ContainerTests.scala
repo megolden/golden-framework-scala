@@ -29,9 +29,9 @@ class ContainerTests extends AnyFunSuite with Matchers:
       b.registerInstance[Int](3)
     }
 
-    val values = container.get[Iterable[Int]]
+    val values = container.get[List[Int]]
 
-    values shouldBe Seq(1, 2, 3)
+    values shouldBe List(1, 2, 3)
   }
 
   test("get should return last instance of a service") {

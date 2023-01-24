@@ -1,7 +1,8 @@
 package golden.framework.validation.rules
 
 import golden.framework.validation.{PropertyValidationRule, PropertyValidator}
-import golden.framework.{nonNullOrNone, Predicate, Predicate2}
+import golden.framework.{Predicate, Predicate2}
+import golden.framework.CommonExtensions.nonNullOrNone
 
 private class CommonPropertyValidatorImpl[P, T](validator: PropertyValidator[P, T], negate: Boolean = false)
   extends CommonPropertyValidator[P, T]:

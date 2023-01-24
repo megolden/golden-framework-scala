@@ -1,6 +1,6 @@
 package golden.framework.bind
 
-enum ServiceLifetime { case
+private enum ServiceLifetime { case
   Transient,
   Scope,
   Singleton

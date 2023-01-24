@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.module.{SimpleDeserializers, SimpleKeyDese
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer
 import scala.reflect.Enum
 import golden.framework.ClassUtils.{findEnumFromOrdinalMethod, findEnumFromNameMethod}
+import EnumModule.*
 
 class EnumModule extends SimpleModule:
   addSerializer(EnumSerializer())
@@ -17,57 +18,59 @@ class EnumModule extends SimpleModule:
   setDeserializers(EnumDeserializers())
   setKeyDeserializers(EnumKeyDeserializers())
 
-class EnumSerializer extends StdScalarSerializer[Enum](classOf[Enum]):
-  override def serialize(value: Enum, generator: JsonGenerator, provider: SerializerProvider): Unit =
-    if (provider.isEnabled(WRITE_ENUMS_USING_INDEX))
-      generator.writeNumber(value.ordinal)
-    else
-      generator.writeString(value.toString)
+object EnumModule extends EnumModule:
 
-class EnumKeySerializer extends StdScalarSerializer[Enum](classOf[Enum]):
-  override def serialize(value: Enum, generator: JsonGenerator, provider: SerializerProvider): Unit =
-    if (provider.isEnabled(WRITE_ENUM_KEYS_USING_INDEX))
-      generator.writeFieldName(value.ordinal.toString)
-    else
-      generator.writeFieldName(value.toString)
+  class EnumSerializer extends StdScalarSerializer[Enum](classOf[Enum]):
+    override def serialize(value: Enum, generator: JsonGenerator, provider: SerializerProvider): Unit =
+      if (provider.isEnabled(WRITE_ENUMS_USING_INDEX))
+        generator.writeNumber(value.ordinal)
+      else
+        generator.writeString(value.toString)
 
-class EnumDeserializer[T <: Enum](enumType: Class[T]) extends StdScalarDeserializer[T](enumType):
+  class EnumKeySerializer extends StdScalarSerializer[Enum](classOf[Enum]):
+    override def serialize(value: Enum, generator: JsonGenerator, provider: SerializerProvider): Unit =
+      if (provider.isEnabled(WRITE_ENUM_KEYS_USING_INDEX))
+        generator.writeFieldName(value.ordinal.toString)
+      else
+        generator.writeFieldName(value.toString)
 
-  private val _fromOrdinal = findEnumFromOrdinalMethod[T](enumType)
-  private val _fromName = findEnumFromNameMethod[T](enumType)
+  class EnumDeserializer[T <: Enum](enumType: Class[T]) extends StdScalarDeserializer[T](enumType):
 
-  override def deserialize(parser: JsonParser, context: DeserializationContext): T =
-    if parser.hasToken(JsonToken.VALUE_NUMBER_INT) then _fromOrdinal(parser.getIntValue)
-    else _fromName(parser.getValueAsString)
+    private val _fromOrdinal = findEnumFromOrdinalMethod[T](enumType)
+    private val _fromName = findEnumFromNameMethod[T](enumType)
 
-class EnumKeyDeserializer(enumType: Class[? <: Enum]) extends KeyDeserializer:
+    override def deserialize(parser: JsonParser, context: DeserializationContext): T =
+      if parser.hasToken(JsonToken.VALUE_NUMBER_INT) then _fromOrdinal(parser.getIntValue)
+      else _fromName(parser.getValueAsString)
 
-  private val _fromOrdinal = findEnumFromOrdinalMethod(enumType)
-  private val _fromName = findEnumFromNameMethod(enumType)
+  class EnumKeyDeserializer(enumType: Class[? <: Enum]) extends KeyDeserializer:
 
-  override def deserializeKey(key: String, context: DeserializationContext): AnyRef =
-    val isOrdinal = Character.isDigit(key.charAt(0))
-    if isOrdinal then _fromOrdinal(key.toInt).asInstanceOf[AnyRef]
-    else _fromName(key).asInstanceOf[AnyRef]
+    private val _fromOrdinal = findEnumFromOrdinalMethod(enumType)
+    private val _fromName = findEnumFromNameMethod(enumType)
 
-class EnumDeserializers extends SimpleDeserializers:
-  override def findBeanDeserializer(
-    javaType: JavaType,
-    config: DeserializationConfig,
-    beanDesc: BeanDescription): JsonDeserializer[?] =
+    override def deserializeKey(key: String, context: DeserializationContext): AnyRef =
+      val isOrdinal = Character.isDigit(key.charAt(0))
+      if isOrdinal then _fromOrdinal(key.toInt).asInstanceOf[AnyRef]
+      else _fromName(key).asInstanceOf[AnyRef]
 
-    if (classOf[Enum].isAssignableFrom(javaType.getRawClass))
-      EnumDeserializer[Enum](javaType.getRawClass.asInstanceOf[Class[Enum]])
-    else
-      super.findBeanDeserializer(javaType, config, beanDesc)
+  class EnumDeserializers extends SimpleDeserializers:
+    override def findBeanDeserializer(
+      javaType: JavaType,
+      config: DeserializationConfig,
+      beanDesc: BeanDescription): JsonDeserializer[?] =
 
-class EnumKeyDeserializers extends SimpleKeyDeserializers:
-  override def findKeyDeserializer(
-    javaType: JavaType,
-    config: DeserializationConfig,
-    beanDesc: BeanDescription): KeyDeserializer =
+      if (classOf[Enum].isAssignableFrom(javaType.getRawClass))
+        EnumDeserializer[Enum](javaType.getRawClass.asInstanceOf[Class[Enum]])
+      else
+        super.findBeanDeserializer(javaType, config, beanDesc)
 
-    if (classOf[Enum].isAssignableFrom(javaType.getRawClass))
-      EnumKeyDeserializer(javaType.getRawClass.asInstanceOf[Class[? <: Enum]])
-    else
-      super.findKeyDeserializer(javaType, config, beanDesc)
+  class EnumKeyDeserializers extends SimpleKeyDeserializers:
+    override def findKeyDeserializer(
+      javaType: JavaType,
+      config: DeserializationConfig,
+      beanDesc: BeanDescription): KeyDeserializer =
+
+      if (classOf[Enum].isAssignableFrom(javaType.getRawClass))
+        EnumKeyDeserializer(javaType.getRawClass.asInstanceOf[Class[? <: Enum]])
+      else
+        super.findKeyDeserializer(javaType, config, beanDesc)

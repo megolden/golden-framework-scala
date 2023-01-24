@@ -68,7 +68,7 @@ private class JavalinApplicationBuilder extends ApplicationBuilder:
 
     val container = createContainer()
 
-    val startupTasks = container.get[Iterable[StartupTask]].toSeq.sortBy(_.order)
+    val startupTasks = container.get[List[StartupTask]].sortBy(_.order)
     startupTasks.filter(_.beforeStart).foreach(_.execute())
 
     val environment = container.get[WebEnvironment]

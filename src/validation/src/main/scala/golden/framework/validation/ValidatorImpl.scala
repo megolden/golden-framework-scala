@@ -2,7 +2,7 @@ package golden.framework.validation
 
 import scala.collection.mutable.ArrayBuffer as MutableArray
 import golden.framework.Predicate
-import golden.framework.{isNone, isOption, unwrapOption}
+import golden.framework.CommonExtensions.{isNone, isOption, unwrapOption}
 import golden.framework.OptionExtensions.tap
 
 private class ValidatorImpl[T](skipNone: Boolean = false) extends Validator[T]:

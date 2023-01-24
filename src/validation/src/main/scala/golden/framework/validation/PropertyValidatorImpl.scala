@@ -3,7 +3,8 @@ package golden.framework.validation
 import org.apache.commons.lang3.reflect.FieldUtils.getField
 import org.apache.commons.lang3.reflect.MethodUtils.invokeMethod
 import scala.collection.mutable.ArrayBuffer as MutableArray
-import golden.framework.{Predicate2, isNull, isNone, isOption, unwrapOption}
+import golden.framework.Predicate2
+import golden.framework.CommonExtensions.{isNull, isNone, isOption, unwrapOption}
 import golden.framework.OptionExtensions.tap
 
 private class PropertyValidatorImpl[P, T](propertyPath: String, skipNone: Boolean = false)

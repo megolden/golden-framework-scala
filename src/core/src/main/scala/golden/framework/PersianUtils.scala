@@ -1,6 +1,6 @@
 package golden.framework
 
-import scala.collection.mutable.ListBuffer
+import CommonExtensions.isNull
 import golden.framework.StringUtils.Empty
 
 object PersianUtils:
@@ -100,3 +100,5 @@ object PersianUtils:
         case other => other
       }
     }
+
+  end extension

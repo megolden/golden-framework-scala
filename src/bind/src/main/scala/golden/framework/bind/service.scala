@@ -1,10 +1,11 @@
 package golden.framework.bind
 
 import golden.framework.Type
-import ServiceLifetime.Transient
-import annotation.StaticAnnotation
+import scala.annotation.{compileTimeOnly, StaticAnnotation}
 
-class service private(val as: Option[Type], val lifetime: ServiceLifetime) extends StaticAnnotation:
-  def this() = this(None, Transient)
-  def this(as: Type, lifetime: ServiceLifetime = Transient) = this(Some(as), lifetime)
-  def this(lifetime: ServiceLifetime) = this(None, lifetime)
+@compileTimeOnly("`service` is compile time only annotation")
+class service private(val as: Option[Type], val asSingleton: Boolean, val asContainerScoped: Boolean)
+  extends StaticAnnotation:
+
+  def this(as: Type = null, asSingleton: Boolean = false, asContainerScoped: Boolean = false) =
+    this(Option(as), asSingleton, asContainerScoped)

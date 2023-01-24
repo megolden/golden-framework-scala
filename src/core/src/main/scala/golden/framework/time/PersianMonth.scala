@@ -1,8 +1,6 @@
 package golden.framework.time
 
 enum PersianMonth(val value: Int):
-  val nativeName: String = PersianCalendar.nativeMonthNames(ordinal)
-
   case Farvardin extends PersianMonth(1)
   case Ordibehesht extends PersianMonth(2)
   case Khordad extends PersianMonth(3)
@@ -16,5 +14,4 @@ enum PersianMonth(val value: Int):
   case Bahman extends PersianMonth(11)
   case Esfand extends PersianMonth(12)
 
-object PersianMonth:
-  def fromValue(value: Int): PersianMonth = PersianMonth.fromOrdinal(value - 1)
+  val nativeName: String = PersianCalendar.nativeMonthNames(ordinal)

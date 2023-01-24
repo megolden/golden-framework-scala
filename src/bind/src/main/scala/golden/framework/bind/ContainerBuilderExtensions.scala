@@ -1,18 +1,18 @@
 package golden.framework.bind
 
-import ServiceLifetime.Transient
-
 object ContainerBuilderExtensions:
+
   extension (builder: ContainerBuilder)
 
     inline def registerPackageServices[TPackageRoot](setup: ServiceRegistrationBuilder => ?): ContainerBuilder = {
-      val services = Macros.getAnnotatedPackageTypesWithCtor[TPackageRoot, service]
-      services.foreach { (tpe, serviceAnnotations, ctorParams) =>
-        val serviceBuilder = builder.registerService(tpe, serviceAnnotations).usingConstructor(ctorParams*)
-        setup(serviceBuilder)
+      val serviceTypes = Macros.findAnnotatedServicesOf[TPackageRoot]
+      serviceTypes.foreach { (tpe, constructor, services) =>
+        val provider = new TypeServiceProvider(tpe, constructor)
+        val serviceBuilder = builder.registerService(tpe, provider, services)
+        setup.apply(serviceBuilder)
       }
       builder
     }
 
-    inline def registerPackageServices[TPackageRoot](lifetime: ServiceLifetime = Transient): ContainerBuilder =
-      registerPackageServices[TPackageRoot](_.withLifetime(lifetime))
+    inline def registerPackageServices[TPackageRoot](): ContainerBuilder =
+      registerPackageServices[TPackageRoot](_ => ())

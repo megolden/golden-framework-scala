@@ -8,17 +8,16 @@ trait WildcardType extends Type:
 
   private val hasLow = low != Type.of[Nothing]
   private val hasHi = hi != Type.of[Any]
-
-  override protected def internalGetRawType: Class[?] = classOf[Object]
-
-  override def name: String = {
+  private val _name = {
     if hasLow && hasHi then symbolName + " >: " + low.name + " <: " + hi.name
     else if hasLow then symbolName + " >: " + low.name
     else if hasHi then symbolName + " <: " + hi.name
     else symbolName
   }
 
-  override protected def internalGetType: JType = {
+  override def name: String = _name
+
+  override def getType: JType = {
     val upper = Option.when(hasHi)(hi).map(_.getType)
     val lower = Option.when(hasLow)(low).map(_.getType)
     new JWildcardType {
