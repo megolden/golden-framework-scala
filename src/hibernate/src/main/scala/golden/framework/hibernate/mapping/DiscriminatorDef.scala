@@ -1,30 +1,23 @@
 package golden.framework.hibernate.mapping
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.dataformat.xml.annotation.{JacksonXmlProperty, JacksonXmlRootElement}
 
+@JsonPropertyOrder(Array(" " + "column", "type", "insert"))
 @JacksonXmlRootElement(localName = "discriminator")
 class DiscriminatorDef(
   val column: Option[ColumnDef] = None,
-  val typeClass: Option[String] = None,
-  val nullable: Option[Boolean] = None,
-  val length: Option[Int] = None,
-  val insert: Option[Boolean] = None,
-  val force: Option[Boolean] = None):
+  val typeName: Option[String] = None,
+  val insert: Option[Boolean] = None):
+
+  @JacksonXmlProperty(localName = " " + "column", isAttribute = true)
+  private def getColumnName = column.collectFirst { case column if column.isNameOnly => column.name } .orNull
 
   @JacksonXmlProperty(localName = "column")
-  private def getColumn = column.orNull
+  private def getColumn = column.filterNot(_.isNameOnly).orNull
 
-  @JacksonXmlProperty(localName = "class", isAttribute = true)
-  private def getTypeClass = typeClass.orNull
-
-  @JacksonXmlProperty(localName = "not-null", isAttribute = true)
-  private def getNotNullable = nullable.map(!_).orNull
-
-  @JacksonXmlProperty(localName = "length", isAttribute = true)
-  private def getLength = length.orNull
+  @JacksonXmlProperty(localName = "type", isAttribute = true)
+  private def getTypeName = typeName.orNull
 
   @JacksonXmlProperty(localName = "insert", isAttribute = true)
   private def getInsert = insert.orNull
-
-  @JacksonXmlProperty(localName = "force", isAttribute = true)
-  private def getForce = force.orNull

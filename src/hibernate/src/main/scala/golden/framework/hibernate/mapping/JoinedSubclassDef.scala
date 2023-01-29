@@ -13,7 +13,7 @@ class JoinedSubclassDef(
   dynamicInsert: Option[Boolean] = None,
   val table: Option[String] = None,
   val schema: Option[String] = None,
-  properties: Seq[PropertyDef] = Nil,
+  properties: Iterable[PropertyDef] = Nil,
   components: Iterable[ComponentDef] = Nil,
   collections: Iterable[CollectionDef] = Nil,
   oneToOnes: Iterable[OneToOneDef] = Nil,

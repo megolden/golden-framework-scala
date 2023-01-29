@@ -15,7 +15,7 @@ class ClassDef(
   val mutable: Option[Boolean] = None,
   val discriminator: Option[DiscriminatorDef] = None,
   val discriminatorValue: Option[Any] = None,
-  properties: Seq[PropertyDef] = Nil,
+  properties: Iterable[PropertyDef] = Nil,
   components: Iterable[ComponentDef] = Nil,
   collections: Iterable[CollectionDef] = Nil,
   oneToOnes: Iterable[OneToOneDef] = Nil,

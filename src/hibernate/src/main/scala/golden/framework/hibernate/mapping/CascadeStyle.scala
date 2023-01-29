@@ -1,6 +1,6 @@
 package golden.framework.hibernate.mapping
 
-enum CascadeStyle(name: String):
+enum CascadeStyle(val value: String):
   case All extends CascadeStyle("all")
   case AllDeleteOrphan extends CascadeStyle("all-delete-orphan")
   case DeleteOrphan extends CascadeStyle("delete-orphan")
@@ -14,5 +14,3 @@ enum CascadeStyle(name: String):
   case Delete extends CascadeStyle("delete")
   case None extends CascadeStyle("none")
   case SaveUpdate extends CascadeStyle("save-update")
-
-  override def toString: String = name

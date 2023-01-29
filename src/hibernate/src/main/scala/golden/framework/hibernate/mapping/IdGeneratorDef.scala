@@ -1,15 +1,14 @@
 package golden.framework.hibernate.mapping
 
 import com.fasterxml.jackson.dataformat.xml.annotation.{JacksonXmlProperty, JacksonXmlRootElement}
-import golden.framework.hibernate.mapping.IdGenerator
 
 @JacksonXmlRootElement(localName = "generator")
 class IdGeneratorDef(
   val classType: IdGenerator,
-  val parameters: Seq[ParameterDef] = Nil):
+  val parameters: Iterable[ParameterDef] = Nil):
 
   @JacksonXmlProperty(localName = "class", isAttribute = true)
-  private def getClassType = classType
+  private def getClassType = classType.value
 
   @JacksonXmlProperty(localName = "param")
   private def getParameters = parameters

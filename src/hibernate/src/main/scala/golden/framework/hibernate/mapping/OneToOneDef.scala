@@ -1,8 +1,11 @@
 package golden.framework.hibernate.mapping
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.dataformat.xml.annotation.{JacksonXmlProperty, JacksonXmlRootElement}
-import golden.framework.hibernate.mapping.{CascadeStyle, NoProxyLazyFetch, PropertyAccess}
 
+@JsonPropertyOrder(Array(
+  "name", "class", "cascade", "constrained", "property-ref", "access", "lazy", "foreign-key",
+  "column", "type"))
 @JacksonXmlRootElement(localName = "one-to-one")
 class OneToOneDef(
   val name: String,
@@ -24,13 +27,13 @@ class OneToOneDef(
   private def getForeignKey = foreignKey.orNull
 
   @JacksonXmlProperty(localName = "access", isAttribute = true)
-  private def getAccess = access.orNull
+  private def getAccess = access.map(_.value).orNull
 
   @JacksonXmlProperty(localName = "lazy", isAttribute = true)
-  private def getLazyFetch = lazyFetch.orNull
+  private def getLazyFetch = lazyFetch.map(_.value).orNull
 
   @JacksonXmlProperty(localName = "cascade", isAttribute = true)
-  private def getCascade = cascade.orNull
+  private def getCascade = cascade.map(_.value).orNull
 
   @JacksonXmlProperty(localName = "property-ref", isAttribute = true)
   private def getPropertyRef = propertyRef.orNull

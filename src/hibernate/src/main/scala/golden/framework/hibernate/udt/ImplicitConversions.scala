@@ -1,11 +1,10 @@
 package golden.framework.hibernate.udt
 
 import scala.collection.mutable
-import golden.framework.hibernate.udt.{Set, List, Map}
 import scala.jdk.CollectionConverters.*
 import scala.language.implicitConversions
 
-object CollectionUtils:
+object ImplicitConversions:
 
   implicit def toSet[T](set: Set[T]): mutable.Set[T] = set.asScala
 

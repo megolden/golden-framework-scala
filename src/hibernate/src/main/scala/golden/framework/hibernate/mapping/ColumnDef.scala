@@ -1,7 +1,10 @@
 package golden.framework.hibernate.mapping
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.dataformat.xml.annotation.{JacksonXmlProperty, JacksonXmlRootElement}
 
+@JsonPropertyOrder(Array(
+  "name", "length", "precision", "scale", "not-null", "unique", "unique-key", "sql-type", "default"))
 @JacksonXmlRootElement(localName = "column")
 class ColumnDef(
   val name: String,
@@ -41,8 +44,12 @@ class ColumnDef(
   @JacksonXmlProperty(localName = "unique-key", isAttribute = true)
   private def getUniqueKey = uniqueKey.orNull
 
-  // def applyUniqueKey(key: String): ColumnDef =
-  //   if (!unique.contains(true))
-  //     this
-  //   else
-  //     this.copy(uniqueKey = Some(key), unique = None)
+  def isNameOnly: Boolean =
+    length.isEmpty &&
+    nullable.isEmpty &&
+    sqlType.isEmpty &&
+    precision.isEmpty &&
+    scale.isEmpty &&
+    unique.isEmpty &&
+    defaultValue.isEmpty &&
+    uniqueKey.isEmpty

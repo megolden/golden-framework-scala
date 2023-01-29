@@ -30,13 +30,13 @@ class ManyToOneDef(
   private def getForeignKey = foreignKey.orNull
 
   @JacksonXmlProperty(localName = "access", isAttribute = true)
-  private def getAccess = access.orNull
+  private def getAccess = access.map(_.value).orNull
 
   @JacksonXmlProperty(localName = "lazy", isAttribute = true)
-  private def getLazyFetch = lazyFetch.orNull
+  private def getLazyFetch = lazyFetch.map(_.value).orNull
 
   @JacksonXmlProperty(localName = "cascade", isAttribute = true)
-  private def getCascade = cascade.orNull
+  private def getCascade = cascade.map(_.value).orNull
 
   @JacksonXmlProperty(localName = "property-ref", isAttribute = true)
   private def getPropertyRef = propertyRef.orNull

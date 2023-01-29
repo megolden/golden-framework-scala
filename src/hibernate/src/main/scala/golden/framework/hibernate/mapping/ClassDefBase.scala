@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
 
 @JsonPropertyOrder(Array(
+  "name", "extends", "table", "discriminator-value", "mutable", "schema", 
+  "dynamic-update", "dynamic-insert", "lazy", "abstract",
   "id", "composite-id", "key",
   "discriminator",
   "property", "component",
@@ -16,7 +18,7 @@ abstract class ClassDefBase(
   val lazyFetch: Option[Boolean] = None,
   val dynamicUpdate: Option[Boolean] = None,
   val dynamicInsert: Option[Boolean] = None,
-  val properties: Seq[PropertyDef] = Nil,
+  val properties: Iterable[PropertyDef] = Nil,
   val components: Iterable[ComponentDef] = Nil,
   val collections: Iterable[CollectionDef] = Nil,
   val oneToOnes: Iterable[OneToOneDef] = Nil,

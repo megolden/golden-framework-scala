@@ -1,7 +1,6 @@
 package golden.framework.hibernate.mapping
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement
-import golden.framework.hibernate.mapping.{CascadeStyle, ExtraLazyFetch, PropertyAccess}
 
 @JacksonXmlRootElement(localName = "set")
 class SetDef(

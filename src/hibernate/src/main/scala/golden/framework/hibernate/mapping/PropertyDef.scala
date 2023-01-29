@@ -2,9 +2,11 @@ package golden.framework.hibernate.mapping
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.dataformat.xml.annotation.{JacksonXmlProperty, JacksonXmlRootElement}
-import golden.framework.hibernate.mapping.{PropertyAccess, PropertyGenerated}
 
-@JsonPropertyOrder(Array("column", "type"))
+@JsonPropertyOrder(Array(
+  "name", " " + "type", " " + "column", "not-null", "length", "precision", "scale", "unique",
+  "update", "insert", "generated", "unique-key", "access",
+  "column", "type"))
 @JacksonXmlRootElement(localName = "property")
 class PropertyDef(
   val name: String,
@@ -18,17 +20,20 @@ class PropertyDef(
   val insert: Option[Boolean] = None,
   val update: Option[Boolean] = None,
   val generated: Option[PropertyGenerated] = None,
-  val columns: Seq[ColumnDef] = Nil,
+  val columns: Iterable[ColumnDef] = Nil,
   val uniqueKey: Option[String] = None):
 
   @JacksonXmlProperty(localName = "name", isAttribute = true)
   private def getName = name
 
+  @JacksonXmlProperty(localName = " " + "type", isAttribute = true)
+  private def getTypeName = propertyType.collectFirst { case tpe if !tpe.hasParameter => tpe.name }.orNull
+
   @JacksonXmlProperty(localName = "type")
-  private def getType = propertyType.orNull
+  private def getType = propertyType.filter(_.hasParameter).orNull
 
   @JacksonXmlProperty(localName = "access", isAttribute = true)
-  private def getAccess = access.orNull
+  private def getAccess = access.map(_.value).orNull
 
   @JacksonXmlProperty(localName = "not-null", isAttribute = true)
   private def getNotNullable = nullable.map(!_).orNull
@@ -52,16 +57,19 @@ class PropertyDef(
   private def getUpdate = update.orNull
 
   @JacksonXmlProperty(localName = "generated", isAttribute = true)
-  private def getGenerated = generated.orNull
+  private def getGenerated = generated.map(_.value).orNull
+
+  @JacksonXmlProperty(localName = " " + "column", isAttribute = true)
+  private def getColumnName = {
+    if columns.size == 1 && columns.head.isNameOnly then columns.head.name
+    else null
+  }
 
   @JacksonXmlProperty(localName = "column")
-  private def getColumns = columns
+  private def getColumns = {
+    if columns.size == 1 && columns.head.isNameOnly then Nil
+    else columns
+  }
 
   @JacksonXmlProperty(localName = "unique-key", isAttribute = true)
   private def getUniqueKey = uniqueKey.orNull
-
-  // def applyUniqueKey(key: String): PropertyDef =
-  //   if (!unique.contains(true))
-  //     this
-  //   else
-  //     this.copy(uniqueKey = Some(key), unique = None, columns = this.columns.map(_.applyUniqueKey(key)))

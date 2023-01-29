@@ -11,7 +11,7 @@ class SubclassDef(
   lazyFetch: Option[Boolean] = None,
   dynamicUpdate: Option[Boolean] = None,
   dynamicInsert: Option[Boolean] = None,
-  properties: Seq[PropertyDef] = Nil,
+  properties: Iterable[PropertyDef] = Nil,
   components: Iterable[ComponentDef] = Nil,
   collections: Iterable[CollectionDef] = Nil,
   oneToOnes: Iterable[OneToOneDef] = Nil,

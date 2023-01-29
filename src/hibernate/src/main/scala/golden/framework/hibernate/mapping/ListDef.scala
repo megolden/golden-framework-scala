@@ -36,12 +36,3 @@ class ListDef(
 
   @JacksonXmlProperty(localName = "list-index")
   private def getListIndex = listIndex
-
-@JacksonXmlRootElement(localName = "list-index")
-class ListIndexDef(val base: Option[Int] = None, val column: Option[ColumnDef] = None):
-
-  @JacksonXmlProperty(localName = "base", isAttribute = true)
-  private def getBase = base.orNull
-
-  @JacksonXmlProperty(localName = "column")
-  private def getColumn = column.orNull

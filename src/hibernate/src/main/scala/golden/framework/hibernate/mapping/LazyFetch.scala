@@ -1,7 +1,5 @@
 package golden.framework.hibernate.mapping
 
-enum LazyFetch(name: String):
+enum LazyFetch(val value: String):
   case False extends LazyFetch("false")
   case Proxy extends LazyFetch("proxy")
-
-  override def toString: String = name

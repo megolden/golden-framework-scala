@@ -1,6 +1,6 @@
 package golden.framework.hibernate.udt
 
-import golden.framework.isNullOrNone
+import golden.framework.CommonExtensions.isNullOrNone
 import org.hibernate.engine.spi.SharedSessionContractImplementor
 import org.hibernate.usertype.UserType
 import java.sql.{PreparedStatement, ResultSet}

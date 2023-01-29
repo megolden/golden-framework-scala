@@ -5,8 +5,9 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
 import golden.framework.hibernate.mapping.{CascadeStyle, ExtraLazyFetch, PropertyAccess}
 
 @JsonPropertyOrder(Array(
-  "key", "list-index", "map-key", "element",
-  "composite-element", "one-to-many", "many-to-many"))
+  "name", "table", "schema", "lazy", "inverse", "cascade", "access", "mutable", "collection-type",
+  "key", "list-index", "map-key", 
+  "element", "composite-element", "one-to-many", "many-to-many"))
 abstract class CollectionDef(
   val name: String,
   val key: KeyDef,
@@ -32,16 +33,22 @@ abstract class CollectionDef(
   private def getTable = table.orNull
 
   @JacksonXmlProperty(localName = "lazy", isAttribute = true)
-  private def getLazyFetch = lazyFetch.orNull
+  private def getLazyFetch = lazyFetch.map(_.value).orNull
 
   @JacksonXmlProperty(localName = "cascade", isAttribute = true)
-  private def getCascade = cascade.orNull
+  private def getCascade = cascade.map(_.value).orNull
 
   @JacksonXmlProperty(localName = "access", isAttribute = true)
-  private def getAccess = access.orNull
+  private def getAccess = access.map(_.value).orNull
 
   @JacksonXmlProperty(localName = "inverse", isAttribute = true)
   private def getInverse = inverse.orNull
+
+  @JacksonXmlProperty(localName = "mutable", isAttribute = true)
+  private def getMutable = mutable.orNull
+
+  @JacksonXmlProperty(localName = "collection-type", isAttribute = true)
+  private def getCollectionType = collectionType.orNull
 
   @JacksonXmlProperty(localName = "one-to-many")
   private def getOneToMany = oneToMany.orNull
@@ -54,9 +61,3 @@ abstract class CollectionDef(
 
   @JacksonXmlProperty(localName = "composite-element")
   private def getCompositeElement = compositeElement.orNull
-
-  @JacksonXmlProperty(localName = "mutable", isAttribute = true)
-  private def getMutable = mutable.orNull
-
-  @JacksonXmlProperty(localName = "collection-type", isAttribute = true)
-  private def getCollectionType = collectionType.orNull

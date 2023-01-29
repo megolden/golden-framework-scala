@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.dataformat.xml.annotation.{JacksonXmlProperty, JacksonXmlRootElement}
 import golden.framework.hibernate.mapping.PropertyAccess
 
-@JsonPropertyOrder(Array("property", "many-to-one", "one-to-one", "component"))
+@JsonPropertyOrder(Array(
+  "name", "class", "insert", "update", "access", "lazy", "unique",
+  "property", "many-to-one", "one-to-one", "component"))
 @JacksonXmlRootElement(localName = "component")
 class ComponentDef(
   val name: String,
@@ -26,7 +28,7 @@ class ComponentDef(
   private def getTypeClass = typeClass
 
   @JacksonXmlProperty(localName = "access", isAttribute = true)
-  private def getAccess = access.orNull
+  private def getAccess = access.map(_.value).orNull
 
   @JacksonXmlProperty(localName = "unique", isAttribute = true)
   private def getUnique = unique.orNull

@@ -1,8 +1,6 @@
 package golden.framework.hibernate.mapping
 
-enum PropertyGenerated(name: String):
+enum PropertyGenerated(val value: String):
   case Never extends PropertyGenerated("never")
   case Insert extends PropertyGenerated("insert")
   case Always extends PropertyGenerated("always")
-
-  override def toString: String = name

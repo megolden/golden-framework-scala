@@ -115,10 +115,12 @@ lazy val hibernate = project
     libraryDependencies ++= testLibraries ++ Seq(
       "org.hsqldb" % "hsqldb" % "2.7.1" % Test,
       "com.h2database" % "h2" % "2.1.214" % Test,
-      "org.mariadb.jdbc" % "mariadb-java-client" % "3.1.0" % Test
+      "org.mariadb.jdbc" % "mariadb-java-client" % "3.1.0" % Test,
+      "org.dom4j" % "dom4j" % "2.1.4" % Test
     ),
     publishConfiguration := publishConfiguration.value.withOverwrite(true),
-    publishM2Configuration := publishM2Configuration.value.withOverwrite(true)
+    publishM2Configuration := publishM2Configuration.value.withOverwrite(true),
+    publish / skip := true
   )
 
 lazy val root = project
